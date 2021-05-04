@@ -1,0 +1,1 @@
+A WYSIWYG editor for Wikidot based on slatejs
