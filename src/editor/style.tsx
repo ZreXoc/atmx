@@ -1,9 +1,21 @@
-import {Typography} from "antd";
 import {RenderElementProps} from "slate-react";
+
+export interface inlineInterface {
+    key:string,
+    title?:string,
+    hotkey?:string
+}
+
+export interface blockInterface {
+    key:string,
+    renderer(props:RenderElementProps):JSX.Element,
+    title?:string,
+    hotkey?:string
+}
 
 const style = {
     inline: {
-        bold: {
+        bold :{
             key: 'bold',
             title: '粗体(B)',
             hotkey: 'ctrl+b',

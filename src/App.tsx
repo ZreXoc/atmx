@@ -3,7 +3,7 @@ import {useState} from "react";
 import {Layout, Menu} from "antd";
 import {UserOutlined} from "@ant-design/icons";
 
-import MainEditor from "./editor";
+import {MainEditor} from "./editor";
 
 import "./App.less"
 const {Content, Sider, Footer} = Layout;
@@ -16,7 +16,6 @@ const App: React.FC = props => {
         setContentMarginLeft(isCollapsed?80:200);
     };
     return (
-
         <Layout>
             <Sider
                 collapsible collapsed={collapsed} onCollapse={onCollapse}

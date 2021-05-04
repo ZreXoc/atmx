@@ -1,1 +1,1 @@
-export * from "./mainEditor";
+export {MainEditor} from "./mainEditor";

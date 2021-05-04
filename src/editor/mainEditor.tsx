@@ -6,12 +6,13 @@ import {ToolBar} from "./components";
 import './index.less';
 
 import style from "./style";
+import { CustomEditor } from "./type";
 
 const MainEditor:React.FC = props => {
-    const editor = useMemo(() => withReact(createEditor() as ReactEditor),[]);
+    const editor = useMemo(() => withReact(createEditor() as ReactEditor),[]) as CustomEditor;
     const [value, setValue] = useState(
-        JSON.parse(localStorage.getItem('/*content*/') as string) //TODO
-        || [{"type":"header-one","children":[{"text":"你好！"}]},{"type":"","children":[{"text":"欢迎测试的发送发达撒分"}]},{"type":"paragraph","children":[{"text":"不要清空后输入中文","italic":true}]},{"type":"paragraph","children":[{"text":"不要使用手机输入法","italic":true,"underline":true}]},{"type":"paragraph","children":[{"text":"左上可导出（链接暂不可）","italic":true,"underline":true}]},{"type":"paragraph","children":[{"text":"右键打开链接","italic":true,"underline":true}]},{"type":"paragraph","children":[{"text":""},{"type":"link","url":"http://smlt.wikidot.com/zeexoc:wdot","children":[{"text":"link","italic":true,"underline":true}]},{"text":""}]}]
+        JSON.parse(localStorage.getItem('content') as string) //TODO
+        ||[{"type":"header-three","children":[{"text":"你"},{"text":"好！","italic":true}]},{"type":"","children":[{"text":"欢迎测试的发送发达撒分"}]},{"type":"paragraph","children":[{"text":"不要清空后输入中文","italic":true}]},{"type":"paragraph","children":[{"text":"不要使用手机输入法","italic":true,"underline":true,"bold":true}]},{"type":"paragraph","children":[{"text":"左上可导出（链接暂不可）","italic":true,"underline":true}]},{"type":"paragraph","children":[{"text":"右键打开链接","deleted":true},{"text":" 暂不可用"}]},{"type":"paragraph","children":[{"text":""},{"type":"link","url":"http://smlt.wikidot.com/zeexoc:wdot","children":[{"text":"link","italic":true,"underline":true}]},{"text":""}]}]
     )
     //MarkHotkey(editor);
 
@@ -33,7 +34,7 @@ const MainEditor:React.FC = props => {
 
     return (
         <div id={'editor-container'}>
-            <Slate editor={editor} value={value}
+            <Slate editor={editor as ReactEditor} value={value}
                    onChange={value => {
                        setValue(value);
                        // 在 Local Storage 里保存值
@@ -74,4 +75,4 @@ const DefaultElement:React.FC<RenderElementProps> = props => {
     return <p {...props.attributes}>{props.children}</p>
 }
 
-export default MainEditor
+export {MainEditor}
