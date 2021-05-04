@@ -45,6 +45,8 @@ const MainEditor:React.FC = props => {
                     className={'edit-area'}
                     renderElement={renderElement}
                     renderLeaf={renderLeaf}
+                    spellCheck
+                    autoFocus
                 />
             </Slate>
         </div>
