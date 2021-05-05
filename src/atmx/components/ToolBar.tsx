@@ -1,9 +1,8 @@
 import React from 'react';
-import { CustomEditor } from '../type';
 import { Button as AntdButton, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
 import * as Icon from "@ant-design/icons"
-import { CustomCommand } from "../actions";
-import style, { blockInterface, inlineInterface } from "../style";
+
+import { CustomEditor, CustomCommand, style, blockStyle, inlineStyle } from "..";
 import { useSlate } from "slate-react"
 import serialize from "../../wikidot/serialize";
 
@@ -35,21 +34,6 @@ const ToolBar: React.FC<{ editor: CustomEditor }> = props => {
                                              </Menu.Item>
                             </Menu>
                         }>开始</Dropdown.Button>
-                    {/* <Dropdown.Button title={block.headerOne.title} size='small' type="text" trigger="hover"
-                                     onSelect={() => CustomCommand.toggleBlock(editor, block.headerOne.key)}
-                                     overlay={
-                                         <Menu onClick={
-                                             ev=>CustomCommand.toggleInlineMark(editor,'bold')
-                                         }>
-                                             <Menu.Item
-                                                 key={ block.headerTwo.key}
-                                                 >H2</Menu.Item>
-                                             <Menu.Item
-                                                 onClick={() => CustomCommand.toggleBlock(editor, block.headerThree.key)}>H3</Menu.Item>
-                                             <Menu.Item
-                                                 onClick={() => CustomCommand.toggleBlock(editor, block.headerFour.key)}>H4</Menu.Item>
-                                         </Menu>
-                                     }>H1</Dropdown.Button>*/}
                     <BlockButton
                         format={block.headerOne}
                     >H1</BlockButton>
@@ -86,19 +70,7 @@ const ToolBar: React.FC<{ editor: CustomEditor }> = props => {
     );
 }
 
-const Button: React.FC<{ active?: boolean } & ButtonProps> = (props) => {
-    const { active } = props;
-    return (
-        <AntdButton size='small' type="text"
-            style={{
-                color: active ? "#1890ff" : undefined
-            }}
-            {...props}>
-            {props.children}
-        </AntdButton>
-    )
-}
-const MarkButton: React.FC<{ format: inlineInterface, icon?: React.ReactNode } & ButtonProps> = (props) => {
+const MarkButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & ButtonProps> = (props) => {
     const editor = useSlate()
     const { format, icon } = props
     return (
@@ -112,7 +84,7 @@ const MarkButton: React.FC<{ format: inlineInterface, icon?: React.ReactNode } &
         </AntdButton>
     )
 }
-const BlockButton: React.FC<{ format: blockInterface, icon?: React.ReactNode } & ButtonProps> = (props) => {
+const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode } & ButtonProps> = (props) => {
     const editor = useSlate()
     const { format, icon } = props
     return (
@@ -153,4 +125,4 @@ const BlockButton: React.FC<{ format: blockInterface, icon?: React.ReactNode } &
     )
 } */
 
-export default ToolBar;
+export { ToolBar };

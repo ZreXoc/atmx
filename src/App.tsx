@@ -3,7 +3,7 @@ import {useState} from "react";
 import {Layout, Menu} from "antd";
 import {UserOutlined} from "@ant-design/icons";
 
-import {MainEditor} from "./editor";
+import {MainEditor} from "./atmx";
 
 import "./App.less"
 const {Content, Sider, Footer} = Layout;

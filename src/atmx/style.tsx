@@ -1,21 +1,30 @@
-import {RenderElementProps} from "slate-react";
+import { RenderElementProps } from "slate-react";
 
-export interface inlineInterface {
-    key:string,
-    title?:string,
-    hotkey?:string
+export interface inlineStyle {
+    key: string,
+    title?: string,
+    hotkey?: string
 }
 
-export interface blockInterface {
-    key:string,
-    renderer(props:RenderElementProps):JSX.Element,
-    title?:string,
-    hotkey?:string
+export interface blockStyle {
+    key: string,
+    renderer(props: RenderElementProps): JSX.Element,
+    title?: string,
+    hotkey?: string
 }
 
-const style = {
+export interface styleInterface {
+    inline:{
+        [styleName:string]:inlineStyle
+    },
+    block:{
+        [styleName:string]:blockStyle
+    }
+}
+
+export const style:styleInterface = {
     inline: {
-        bold :{
+        bold: {
             key: 'bold',
             title: '粗体(B)',
             hotkey: 'ctrl+b',
@@ -44,24 +53,21 @@ const style = {
         headerOne: {
             key: 'header-one',
             title: '一级标题(H)',
-            renderer(props:RenderElementProps) {
+            renderer(props: RenderElementProps) {
                 return (<h1 {...props.attributes}>{props.children}</h1>)
             }
         }, headerTwo: {
             key: 'header-two',
             title: '二级标题',
-            renderer(props:RenderElementProps) {
+            renderer(props: RenderElementProps) {
                 return (<h2 {...props.attributes}>{props.children}</h2>)
             }
         }, headerThree: {
             key: 'header-three',
             title: '三级标题',
-            renderer(props:RenderElementProps) {
+            renderer(props: RenderElementProps) {
                 return (<h3 {...props.attributes}>{props.children}</h3>)
             }
         }
     }
-
 }
-
-export default style;
