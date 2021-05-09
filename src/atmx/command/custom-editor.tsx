@@ -34,10 +34,14 @@ namespace CustomCommand {
 
     export const toggleBlock: ICustomCommand = (editor, format) => {
         const isActive = isBlockActive(editor, format)
-        if (isActive) Transforms.setNodes(editor, {type: 'paragraph',children:[]})
 
-        if (!isActive) Transforms.setNodes(editor, {type: format,children:[]})
+        Transforms.setNodes(
+            editor,
+            { type: isActive ? undefined : format },
+            { match: n => Editor.isBlock(editor, n) }
+          )
     }
+
 }
 
 export {CustomCommand}

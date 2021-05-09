@@ -1,8 +1,43 @@
 @import "../../theme";
 @import "../wikidot/default";
 
+@header-height :48px+8*2;
+@sidebar-width: 200px+8*0;
+
 #editor-container {
-  .edit-area {
-    .editor-content-style();
+  display: flex;
+  flex-flow: wrap;
+  flex-direction: column;
+
+  .editor-header {
+    .editor-headbar {
+      width: 100%;
+      padding: 10px 20px;
+      margin: 10px;
+      overflow: initial;
+    }
+  }
+
+  .editor-main {
+    display: flex;
+    flex-grow: 1;
+
+
+    .editor-sidebar {
+      margin: 10px;
+      width: @sidebar-width;
+      overflow: auto;
+    }
+
+    .editor-content {
+      padding: 24px;
+      min-height: 30em;
+      margin: 10px;
+      overflow-y: auto;
+
+      .edit-area {
+        .editor-content-style();
+      }
+    }
   }
 }

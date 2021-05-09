@@ -10,16 +10,15 @@ export type ParagraphElement = {
     children: CustomText[]
 }
 
-export type HeadingElement = {
-    type: 'heading'
-    level: number
+export type HeaderOne = {
+    type: 'header-one'
     children: CustomText[]
 }
 
 export type CustomElement = {
     type: string
     children: CustomText[]
-} |ParagraphElement | HeadingElement
+} |ParagraphElement | HeaderOne
 
 
 export type FormattedText = { text: string; bold: boolean; italic: boolean }
