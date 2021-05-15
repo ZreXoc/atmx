@@ -2,9 +2,9 @@ import React from 'react';
 import { Button as AntdButton, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
 import * as Icon from "@ant-design/icons"
 
-import {Editor, BaseEditor, Transforms, Element, Text,Range} from "slate";
+import { Editor, BaseEditor, Transforms, Element, Text, Range } from "slate";
 import { useSlate } from "slate-react";
-import { CustomEditor, CustomCommand, style, blockStyle, inlineStyle } from "..";
+import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
 import serialize from "../../wikidot/serialize";
 
 const { inline, block } = style;
@@ -66,11 +66,24 @@ const ToolBar: React.FC = props => {
                     />
                 </div>
                 <div>
-                    {<LInkButton/>>}
+                    <LinkButton />
                 </div>
             </Space>
         </>
     );
+}
+
+const Button: React.FC<{ isActive?: boolean } & ButtonProps> = (props) => {
+    const { isActive = false } = props;
+    return (
+        <AntdButton
+            style={{
+                color: isActive ? "#1890ff" : undefined
+            }}
+            {...props}>
+            {props.children}
+        </AntdButton>
+    )
 }
 
 const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & ButtonProps> = (props) => {
@@ -79,11 +92,11 @@ const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & B
     return (
         <AntdButton size='small' type="text" icon={icon}
             style={{
-                color: CustomCommand.isMarkActive(editor, format.key) ? "#1890ff" : undefined
+                color: command.isMarkActive(editor, format.key) ? "#1890ff" : undefined
             }}
             onClick={e => {
                 e.preventDefault()
-                CustomCommand.toggleMark(editor, format.key)
+                command.toggleMark(editor, format.key)
             }}
         >
             {props.children}
@@ -96,12 +109,13 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode } & But
     return (
         <AntdButton size='small' type="text" icon={icon}
             style={{
-                color: CustomCommand.isBlockActive(editor, format.key) ? "#1890ff" : undefined
+                color: command.isBlockActive(editor, format.key) ? "#1890ff" : undefined
             }}
             onClick={e => {
                 e.preventDefault()
-                CustomCommand.toggleBlock(editor, format.key)
-            }}>
+                command.toggleBlock(editor, format.key)
+            }}
+        >
             {props.children}
         </AntdButton>
     )
@@ -109,22 +123,30 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode } & But
 
 const LinkButton = () => {
     const editor = useSlate()
-    return (
-      <Button
-        active={isLinkActive(editor)}
-        onMouseDown={event => {
-          event.preventDefault()
-          const url = window.prompt('Enter the URL of the link:')
-          if (!url) return
-          insertLink(editor, url)
-        }}
-      >
-        link
-      </Button>
-    )
-  }
+    const { isLinkActive, insertLink, unwrapLink } = command;
 
- const InsertLink: React.FC<{ editor: CustomEditor }> = props => {
+    return (
+        <Button
+            type='text'
+            isActive={command.isLinkActive(editor)}
+            onMouseDown={event => {
+                event.preventDefault()
+                if (isLinkActive(editor)) {
+                    unwrapLink(editor)
+                } else {
+                    const url = window.prompt('Enter the URL of the link:')
+                    if (!url) return
+                    insertLink(editor, url)
+                }
+
+            }}
+        >
+            <Icon.LinkOutlined />
+        </Button>
+    )
+}
+
+/*const InsertLink: React.FC<{ editor: CustomEditor }> = props => {
     const { editor } = props;
     const getUrl = () => {
         let [link] = Editor.nodes(editor, {
@@ -147,6 +169,6 @@ const LinkButton = () => {
             >L</AntdButton>
         </>
     )
-} 
+}*/
 
 export { ToolBar };

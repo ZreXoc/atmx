@@ -11,7 +11,7 @@ export type ParagraphElement = {
 export type LinkElement = {
     type: 'link'
     url: string
-     children: Descendant[]
+    children: Descendant[]
 }
 
 

@@ -1,4 +1,6 @@
 import { RenderElementProps } from "slate-react";
+import {Button} from 'antd'
+import { LinkElement } from ".";
 
 export interface inlineStyle {
     key: string,
@@ -8,7 +10,7 @@ export interface inlineStyle {
 
 export interface blockStyle {
     key: string,
-    renderer(props: RenderElementProps): JSX.Element,
+    renderer(props: RenderElementProps,element?:Element): JSX.Element,
     title?: string,
     hotkey?: string
 }
@@ -67,6 +69,14 @@ export const style:styleInterface = {
             title: '三级标题',
             renderer(props: RenderElementProps) {
                 return (<h3 {...props.attributes}>{props.children}</h3>)
+            }
+        },
+        link:{
+            key:'link',
+            title:'链接',
+            renderer(props: RenderElementProps) {
+                const element = props.element as LinkElement;
+                return (<a  href={element.url} {...props.attributes}>{props.children}</a>)
             }
         }
     }
