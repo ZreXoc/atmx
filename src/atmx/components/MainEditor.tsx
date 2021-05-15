@@ -7,8 +7,10 @@ import '../index.less';
 
 import { style } from "..";
 import { CustomEditor } from "..";
+import isUrl from 'is-url';
 
 import { Layout } from "antd";
+import { CustomCommand } from "../command/command";
 const { Header, Content, Sider, Footer } = Layout;
 
 const MainEditor: React.FC = props => {
@@ -92,5 +94,33 @@ const Leaf: React.FC<RenderLeafProps> = props => {
 const DefaultElement: React.FC<RenderElementProps> = props => {
     return <p {...props.attributes}>{props.children}</p>
 }
+
+const  withDefault= (editor: ReactEditor)=> {
+    const {insertData,  insertText, isInline } = editor
+  
+    editor.isInline = element => {
+      return element.type === 'link' ? true : isInline(element)
+    }
+  
+    editor.insertText = text => {
+      if (text && isUrl(text)) {
+        CustomCommand.wrapLink(editor, text)
+      } else {
+        insertText(text)
+      }
+    }
+  
+    editor.insertData = data => {
+      const text = data.getData('text/plain')
+  
+      if (text && isUrl(text)) {
+        CustomCommand.wrapLink(editor, text)
+      } else {
+        insertData(data)
+      }
+    }
+  
+    return editor
+  }
 
 export { MainEditor }

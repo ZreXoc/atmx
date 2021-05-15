@@ -1,27 +1,27 @@
-import {BaseEditor} from 'slate'
-import {ReactEditor} from 'slate-react'
+import { BaseEditor, Descendant } from 'slate'
+import { ReactEditor } from 'slate-react'
 
-export type CustomEditor = {
-    type: string
-} & (BaseEditor | ReactEditor)
+export type CustomEditor = BaseEditor | ReactEditor
 
 export type ParagraphElement = {
     type: 'paragraph'
     children: CustomText[]
 }
 
-export type HeaderOne = {
-    type: 'header-one'
-    children: CustomText[]
+export type LinkElement = {
+    type: 'link'
+    url: string
+     children: Descendant[]
 }
+
 
 export type CustomElement = {
     type: string
     children: CustomText[]
-} |ParagraphElement | HeaderOne
+} | ParagraphElement | LinkElement
 
 
-export type FormattedText = { text: string; bold: boolean; italic: boolean }
+export type FormattedText = { text: string; bold?: true; italic?: true }
 
 export type CustomText = FormattedText
 

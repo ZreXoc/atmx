@@ -2,8 +2,9 @@ import React from 'react';
 import { Button as AntdButton, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
 import * as Icon from "@ant-design/icons"
 
+import {Editor, BaseEditor, Transforms, Element, Text,Range} from "slate";
+import { useSlate } from "slate-react";
 import { CustomEditor, CustomCommand, style, blockStyle, inlineStyle } from "..";
-import { useSlate } from "slate-react"
 import serialize from "../../wikidot/serialize";
 
 const { inline, block } = style;
@@ -65,7 +66,7 @@ const ToolBar: React.FC = props => {
                     />
                 </div>
                 <div>
-                    {/*<InsertLink editor={editor}/>*/}
+                    {<LInkButton/>>}
                 </div>
             </Space>
         </>
@@ -106,19 +107,35 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode } & But
     )
 }
 
-/* const InsertLink: React.FC<{ editor: CustomEditor }> = props => {
+const LinkButton = () => {
+    const editor = useSlate()
+    return (
+      <Button
+        active={isLinkActive(editor)}
+        onMouseDown={event => {
+          event.preventDefault()
+          const url = window.prompt('Enter the URL of the link:')
+          if (!url) return
+          insertLink(editor, url)
+        }}
+      >
+        link
+      </Button>
+    )
+  }
+
+ const InsertLink: React.FC<{ editor: CustomEditor }> = props => {
     const { editor } = props;
     const getUrl = () => {
-        // @ts-ignore
         let [link] = Editor.nodes(editor, {
             match: n =>
-                !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'link',
+                !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
         })
         return link ? link[0].url : ''
     }
     return (
         <>
-            <Button title={'导出暂不可用'}
+            <AntdButton title={'导出暂不可用'}
                 active={CustomCommand.isBlockActive(editor, block.link.key)}
                 onClick={event => {
                     event.preventDefault()
@@ -127,9 +144,9 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode } & But
                     if (!url) return
                     CustomCommand.insertLink(editor, url)
                 }}
-            >L</Button>
+            >L</AntdButton>
         </>
     )
-} */
+} 
 
 export { ToolBar };
