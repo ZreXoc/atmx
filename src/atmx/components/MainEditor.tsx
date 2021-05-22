@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from "react";
 import { Slate, Editable, withReact, ReactEditor, RenderLeafProps, RenderElementProps } from "slate-react";
 import { createEditor } from "slate";
 
-import { ToolBar } from "..";
+import { renderLeaf, ToolBar } from "..";
 import '../index.less';
 
 import { style } from "..";
@@ -24,17 +24,18 @@ const MainEditor: React.FC = props => {
         let element;
         Object.values(style.block).some(block => {
             if (props.element.type === block.key) {
-                element = block.renderer(props);
+                element = block.render(props);
                 return true
             }
         })
+
         return element || <DefaultElement {...props} />
     }, [])
 
     // 通过 `useCallback` 定义一个可以记忆的渲染叶子节点的函数。
-    const renderLeaf = useCallback(props => {
+    /*const renderLeaf = useCallback(props => {
         return <Leaf {...props} />
-    }, [])
+    }, [])*/
 
     return (
         <Layout id={'editor-container'} className="site-layout">
@@ -77,6 +78,8 @@ const MainEditor: React.FC = props => {
 const Leaf: React.FC<RenderLeafProps> = props => {
     let className: Array<string> = [];
     Object.values(style.inline).forEach(inlineStyle => {
+        console.log(props);
+        
         if (props.leaf.hasOwnProperty(inlineStyle.key)) {
             className.push(inlineStyle.key);
         }

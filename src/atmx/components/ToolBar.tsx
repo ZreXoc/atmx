@@ -6,6 +6,7 @@ import { Editor, BaseEditor, Transforms, Element, Text, Range } from "slate";
 import { useSlate } from "slate-react";
 import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
 import serialize from "../../wikidot/serialize";
+import { BlockquoteElement, CustomElement } from '../type';
 
 const { inline, block } = style;
 
@@ -67,6 +68,30 @@ const ToolBar: React.FC = props => {
                 </div>
                 <div>
                     <LinkButton />
+                    <BlockButton
+                        format={block.blockquote}
+                        handleClick={(e: React.MouseEvent, editor: CustomEditor) => {
+                            const isActive = command.isBlockActive(editor, block.blockquote.key)
+                            if (!isActive) {
+                                Transforms.wrapNodes(
+                                    editor,
+                                    {
+                                        type: 'block-quote',
+                                        children: []
+                                    },
+                                    { match: n => Editor.isBlock(editor, n) }
+                                )
+                            } else {
+                                Transforms.unwrapNodes(
+                                    editor,
+                                    {
+                                        match: n => Editor.isBlock(editor, n) && n['type'] === 'block-quote'
+                                    }
+                                )
+                            }
+
+                        }}
+                    >Q</BlockButton>
                 </div>
             </Space>
         </>
@@ -103,9 +128,10 @@ const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & B
         </AntdButton>
     )
 }
-const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode } & ButtonProps> = (props) => {
+const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode, handleClick?: (e: React.MouseEvent, editor: CustomEditor) => void } & ButtonProps> = (props) => {
     const editor = useSlate()
     const { format, icon } = props
+    const handleClick = props.handleClick || (() => { command.toggleBlock(editor, format.key) })
     return (
         <AntdButton size='small' type="text" icon={icon}
             style={{
@@ -113,7 +139,7 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode } & But
             }}
             onClick={e => {
                 e.preventDefault()
-                command.toggleBlock(editor, format.key)
+                handleClick(e, editor)
             }}
         >
             {props.children}
@@ -143,6 +169,13 @@ const LinkButton = () => {
         >
             <Icon.LinkOutlined />
         </Button>
+    )
+}
+
+const BlockquoteButton = () => {
+    const editor = useSlate()
+    return (
+        <Button></Button>
     )
 }
 

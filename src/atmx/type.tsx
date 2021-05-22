@@ -14,11 +14,15 @@ export type LinkElement = {
     children: Descendant[]
 }
 
+export type BlockquoteElement = {
+    type: 'block-quote'
+    children: CustomText[]
+}
 
 export type CustomElement = {
     type: string
     children: CustomText[]
-} | ParagraphElement | LinkElement
+} | ParagraphElement | LinkElement|BlockquoteElement
 
 
 export type FormattedText = { text: string; bold?: true; italic?: true }

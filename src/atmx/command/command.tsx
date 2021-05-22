@@ -23,7 +23,6 @@ namespace CustomCommand {
 
 
     export const isBlockActive: ICustomCommand = (editor, format) => {
-        // @ts-ignore
         const [match] = Editor.nodes(editor, {
             match: n =>
                 !Editor.isEditor(n) && Element.isElement(n) && n.type === format,
