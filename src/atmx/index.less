@@ -2,7 +2,7 @@
 @import "../wikidot/default";
 
 @header-height :48px+8*2;
-@sidebar-width: 200px+8*0;
+@sidebar-width: 200px+8*12;
 
 #editor-container {
   display: flex;
@@ -11,7 +11,6 @@
 
   .editor-header {
     .editor-headbar {
-      width: 100%;
       padding: 10px 20px;
       margin: 10px;
       overflow: initial;
@@ -20,14 +19,6 @@
 
   .editor-main {
     display: flex;
-    flex-grow: 1;
-
-
-    .editor-sidebar {
-      margin: 10px;
-      width: @sidebar-width;
-      overflow: auto;
-    }
 
     .editor-content {
       padding: 24px;
@@ -37,6 +28,24 @@
 
       .edit-area {
         .editor-content-style();
+      }
+    }
+
+    .editor-sidebar {
+      flex: 0 0 @sidebar-width  !important;
+      max-width: 50vw !important;
+      min-width: 10vw !important;
+      margin: 10px;
+      overflow: auto;
+
+      .propertie-panel {
+        height: 100%;
+
+        main {
+          flex-grow: 1;
+          padding: 24px;
+          overflow-y: hidden;
+        }
       }
     }
   }

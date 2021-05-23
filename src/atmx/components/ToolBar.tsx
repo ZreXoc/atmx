@@ -2,8 +2,8 @@ import React from 'react';
 import { Button as AntdButton, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
 import * as Icon from "@ant-design/icons"
 
-import { Editor, BaseEditor, Transforms, Element, Text, Range } from "slate";
-import { useSlate } from "slate-react";
+import { Editor, BaseEditor, Transforms, Range } from "slate";
+import { ReactEditor, useSlate} from "slate-react";
 import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
 import serialize from "../../wikidot/serialize";
 import { BlockquoteElement, CustomElement } from '../type';
@@ -32,7 +32,9 @@ const ToolBar: React.FC = props => {
                             }>
                                 <Menu.Item
                                     key='export'
-                                >导出
+                                >导    你好！fd
+
+                                欢迎测试的发送发达撒分出
                                              </Menu.Item>
                             </Menu>
                         }>开始</Dropdown.Button>
@@ -72,7 +74,8 @@ const ToolBar: React.FC = props => {
                         format={block.blockquote}
                         handleClick={(e: React.MouseEvent, editor: CustomEditor) => {
                             const isActive = command.isBlockActive(editor, block.blockquote.key)
-                            if (!isActive) {
+                            const {selection} = editor;
+                            if (!isActive||!Range.isCollapsed(selection as Range)) {
                                 Transforms.wrapNodes(
                                     editor,
                                     {
@@ -84,9 +87,7 @@ const ToolBar: React.FC = props => {
                             } else {
                                 Transforms.unwrapNodes(
                                     editor,
-                                    {
-                                        match: n => Editor.isBlock(editor, n) && n['type'] === 'block-quote'
-                                    }
+                                    { match: n => Editor.isBlock(editor, n) && n['type'] === 'block-quote' }
                                 )
                             }
 
@@ -130,6 +131,7 @@ const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & B
 }
 const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode, handleClick?: (e: React.MouseEvent, editor: CustomEditor) => void } & ButtonProps> = (props) => {
     const editor = useSlate()
+    
     const { format, icon } = props
     const handleClick = props.handleClick || (() => { command.toggleBlock(editor, format.key) })
     return (

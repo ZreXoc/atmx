@@ -1,16 +1,16 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { Slate, Editable, withReact, ReactEditor, RenderLeafProps, RenderElementProps } from "slate-react";
 import { createEditor } from "slate";
+import { Slate, Editable, withReact, ReactEditor, RenderLeafProps, RenderElementProps } from "slate-react";
 
-import { renderLeaf, ToolBar } from "..";
-import '../index.less';
-
+import { ToolBar, PropertiesPanel } from "..";
+import { CustomCommand, renderLeaf ,CustomEditor} from "..";
 import { style } from "..";
-import { CustomEditor } from "..";
-import isUrl from 'is-url';
 
 import { Layout } from "antd";
-import { CustomCommand } from "../command/command";
+import '../index.less';
+
+import isUrl from 'is-url';
+
 const { Header, Content, Sider, Footer } = Layout;
 
 const MainEditor: React.FC = props => {
@@ -67,7 +67,9 @@ const MainEditor: React.FC = props => {
                             autoFocus
                         />
                     </Content>
-                    <Sider className="site-layout-background editor-sidebar" />
+                    <Sider className="site-layout-background editor-sidebar" >
+                        <PropertiesPanel />
+                    </Sider>
                     {/* <Footer style={{ textAlign: 'center' }}>ATMX Created by ZeeXoc</Footer> */}
                 </div>
             </Slate>
@@ -79,7 +81,7 @@ const Leaf: React.FC<RenderLeafProps> = props => {
     let className: Array<string> = [];
     Object.values(style.inline).forEach(inlineStyle => {
         console.log(props);
-        
+
         if (props.leaf.hasOwnProperty(inlineStyle.key)) {
             className.push(inlineStyle.key);
         }
@@ -98,32 +100,32 @@ const DefaultElement: React.FC<RenderElementProps> = props => {
     return <p {...props.attributes}>{props.children}</p>
 }
 
-const  withDefault= (editor: ReactEditor)=> {
-    const {insertData,  insertText, isInline } = editor
-  
+const withDefault = (editor: ReactEditor) => {
+    const { insertData, insertText, isInline } = editor
+
     editor.isInline = element => {
-      return element.type === 'link' ? true : isInline(element)
+        return element.type === 'link' ? true : isInline(element)
     }
-  
+
     editor.insertText = text => {
-      if (text && isUrl(text)) {
-        CustomCommand.wrapLink(editor, text)
-      } else {
-        insertText(text)
-      }
+        if (text && isUrl(text)) {
+            CustomCommand.wrapLink(editor, text)
+        } else {
+            insertText(text)
+        }
     }
-  
+
     editor.insertData = data => {
-      const text = data.getData('text/plain')
-  
-      if (text && isUrl(text)) {
-        CustomCommand.wrapLink(editor, text)
-      } else {
-        insertData(data)
-      }
+        const text = data.getData('text/plain')
+
+        if (text && isUrl(text)) {
+            CustomCommand.wrapLink(editor, text)
+        } else {
+            insertData(data)
+        }
     }
-  
+
     return editor
-  }
+}
 
 export { MainEditor }
