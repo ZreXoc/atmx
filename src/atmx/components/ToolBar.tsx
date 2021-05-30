@@ -2,11 +2,10 @@ import React from 'react';
 import { Button as AntdButton, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
 import * as Icon from "@ant-design/icons"
 
-import { Editor, BaseEditor, Transforms, Range } from "slate";
-import { ReactEditor, useSlate} from "slate-react";
+import { Editor, Transforms, Range } from "slate";
+import {  useSlate} from "slate-react";
 import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
-import serialize from "../../wikidot/serialize";
-import { BlockquoteElement, CustomElement } from '../type';
+import serialize,{renderSerialize} from "../../wikidot/serialize";
 
 const { inline, block } = style;
 
@@ -17,6 +16,7 @@ const ToolBar: React.FC = props => {
         <>
             <Space split={<Divider type="vertical" />}>
                 <div className='header'>
+                    <Button onClick={()=>console.log(renderSerialize(editor))}>11</Button>
                     <Dropdown.Button title={block.headerOne.title} size='small' type='ghost' trigger={["hover"]}
                         overlay={
                             <Menu onClick={
@@ -32,9 +32,7 @@ const ToolBar: React.FC = props => {
                             }>
                                 <Menu.Item
                                     key='export'
-                                >导    你好！fd
-
-                                欢迎测试的发送发达撒分出
+                                >导出
                                              </Menu.Item>
                             </Menu>
                         }>开始</Dropdown.Button>

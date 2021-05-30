@@ -25,7 +25,12 @@ export type CustomElement = {
 } | ParagraphElement | LinkElement|BlockquoteElement
 
 
-export type FormattedText = { text: string; bold?: true; italic?: true }
+export type FormattedText = { 
+    text: string
+    bold?: true
+    italic?: true 
+    color?:string
+ }
 
 export type CustomText = FormattedText
 

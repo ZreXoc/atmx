@@ -79,13 +79,15 @@ const MainEditor: React.FC = props => {
 
 const Leaf: React.FC<RenderLeafProps> = props => {
     let className: Array<string> = [];
+
     Object.values(style.inline).forEach(inlineStyle => {
-        console.log(props);
 
         if (props.leaf.hasOwnProperty(inlineStyle.key)) {
             className.push(inlineStyle.key);
         }
     })
+
+
     return (
         <span
             {...props.attributes}

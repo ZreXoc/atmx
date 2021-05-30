@@ -1,9 +1,12 @@
-import { useCallback, useState } from "react";
-import { Node, Range,Element, Path, BaseRange } from "slate"
-import { useSlate } from "slate-react"
+import React, { useCallback, useState } from "react";
+import { Node, Range, Element, Path, BaseRange } from "slate"
+import { ReactEditor, useSlate } from "slate-react"
 
+import { CirclePicker, ColorResult } from 'react-color'
 import { Layout, Menu } from "antd";
 import { Text } from "slate";
+import { CustomElement } from "../type";
+import { CustomCommand } from "../command/command";
 
 const { SubMenu } = Menu;
 const { Header, Content, Footer, Sider } = Layout;
@@ -11,27 +14,18 @@ const { Header, Content, Footer, Sider } = Layout;
 export const PropertiesPanel = () => {
     const editor = useSlate();
     const [page, setPage] = useState('1')
-    const [...nodes] = useCallback(
+    const [...fragment] = useCallback(
         () => editor.selection ? Node.fragment(editor, editor.selection) : [],
         [editor.selection],
     )()
-        console.log(nodes);
-        
-    const [...texts] = useCallback(
+
+    const [...pureText] = useCallback(
         () => {
-            if(!editor.selection) return[]
-            
-            const range = Range.isForward(editor.selection as BaseRange)
-            ?[editor.selection?.anchor,editor.selection?.focus]
-            :[editor.selection?.focus,editor.selection?.anchor]
-            return Node.texts(editor,{
-            from:range[0]?.path,
-            to:range[1]?.path,
-        }
-        )},
-        [editor.selection],
+            return fragment.map(f => [...Node.string(f)]);
+        },
+        [fragment],
     )()
-    
+
     return (
         <Layout className='propertie-panel'>
             <Header className='site-layout-background'>
@@ -43,10 +37,21 @@ export const PropertiesPanel = () => {
             <Content className='site-layout-background'>
                 {page == '1' ?
                     <div>
-                        <span>text:{texts?.map(n=>n[0].text).join('\n')}</span>
-
+                        <span>text:{pureText?.map(n => n.join('')).join(' ')}</span>
+                        <ColorPicker onChange={(color) =>  CustomCommand.addMark(editor, 'color', color.hex)} />
                     </div> : null}
             </Content>
         </Layout>
+    )
+}
+
+const ColorPicker: React.FC<{ onChange: (color: ColorResult | any) => any }> = (props) => {
+    const { onChange } = props;
+    return (
+        <div onMouseDown={e => e.preventDefault()}>
+            <CirclePicker
+                onChange={onChange}
+            />
+        </div>
     )
 }

@@ -33,10 +33,16 @@ class CustomLeaf {
     readonly props: RenderLeafProps;
 
     readonly className: Array<string> = []
+    readonly style: Object = {}
     readonly attr: Array<TextProps> = []
 
     appendClass(className: string) {
         this.className.push(className);
+        return this;
+    }
+
+    appendStyle(style: Object) {
+        Object.assign(this.style, style);
         return this;
     }
 
@@ -50,11 +56,14 @@ class CustomLeaf {
     }
 
     render() {
+        console.log(this);
+        
         return (
             <span
                 {...this.props.attributes}
                 {...this.attr}
                 className={this.className.join(' ')}
+                style={this.style}
             >
                 {this.props.children}
             </span>
@@ -62,7 +71,7 @@ class CustomLeaf {
     }
 }
 
-export const renderLeaf= (props:RenderLeafProps) => {
+export const renderLeaf = (props: RenderLeafProps) => {
     let leaf = new CustomLeaf(props);
 
     Object.values(style.inline).forEach(inlineStyle => {
@@ -71,6 +80,8 @@ export const renderLeaf= (props:RenderLeafProps) => {
             inlineStyle.render(leaf);
         }
     })
+    
+    if (props.leaf.color) leaf.appendStyle({ color: props.leaf.color })
     return leaf.render();
 }
 
@@ -110,17 +121,17 @@ export const style: styleInterface = {
         headerOne: {
             key: 'header-one',
             title: '一级标题(H)',
-            render:(props: RenderElementProps)=><h1 {...props.attributes}>{props.children}</h1>
+            render: (props: RenderElementProps) => <h1 {...props.attributes}>{props.children}</h1>
 
         }, headerTwo: {
             key: 'header-two',
             title: '二级标题',
-            render:(props: RenderElementProps)=><h2 {...props.attributes}>{props.children}</h2>
+            render: (props: RenderElementProps) => <h2 {...props.attributes}>{props.children}</h2>
 
         }, headerThree: {
             key: 'header-three',
             title: '三级标题',
-            render:(props: RenderElementProps)=><h3 {...props.attributes}>{props.children}</h3>
+            render: (props: RenderElementProps) => <h3 {...props.attributes}>{props.children}</h3>
         },
         link: {
             key: 'link',
@@ -130,10 +141,10 @@ export const style: styleInterface = {
                 return (<a href={element.url} {...props.attributes}>{props.children}</a>)
             }
         },
-        blockquote:{
+        blockquote: {
             key: 'block-quote',
             title: '引用',
-            render:(props: RenderElementProps) => <blockquote {...props.attributes}>{props.children}</blockquote>
+            render: (props: RenderElementProps) => <blockquote {...props.attributes}>{props.children}</blockquote>
         }
     }
 }
