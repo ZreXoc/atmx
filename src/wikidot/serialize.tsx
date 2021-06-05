@@ -53,21 +53,26 @@ const serializeNode = (node: Node): string => {
     }
 }
 
-interface ITextWrapper {
-    //wrap的范围
-    from?: number;
-    to?: number;
+type TextRange = {
+    from: number;
+    to: number;
+}
 
+type TextWrapper = TextRange & {
     before: string;
     after: string;
 }
 
+type FindOption = {
+    matchValue?: (texts: Text[], index: number) => [shouldStart:boolean|undefined,shouldEnd:boolean|undefined]
+
+}
 class Texts {
     t: NodeEntry<FormattedText>[];
 
-    readonly wrapper = Array<Array<ITextWrapper>>([], [], []);
+    readonly wrapper = Array<Array<TextWrapper>>([], [], []);
 
-    wrap(wrapper: ITextWrapper, priortity: 0 | 1 | 2 = 1) {
+    wrap(wrapper: TextWrapper, priortity: 0 | 1 | 2 = 1) {
         this.wrapper[priortity].push(wrapper)
         return this;
     }
@@ -89,60 +94,90 @@ class Texts {
             }
         ))
 
-        return str.map(v => v.before + v.text + v.after).join('')
+        return str.map(v => v.before.join('') + v.text + v.after.join('')).join('')
     }
 }
 
 class Serializer {
     readonly node: Node;
 
-    readonly texts: Texts;
+    readonly texts: Text[];
 
-    wrap = (wrapper: ITextWrapper) => this
+    readonly wrapper = Array<Array<TextWrapper>>([], [], []);
+
+
+    findMark(mark: string, option?: FindOption) {
+        let { texts } = this;
+
+        let from = 0;
+        let textRanges = new Array<TextRange>()
+
+        for (let i = 0; i < texts.length; i++) {
+            const current = texts[i], next = texts[i + 1]
+
+            let shouldStart = !current[mark] && next && next[mark];
+            let shouldEnd = current[mark] && !(next && next[mark]);
+
+            if (option?.matchValue) [shouldStart=shouldStart,shouldEnd=shouldEnd] = option.matchValue(texts, i);
+
+            if (shouldStart) from = i + 1;
+            if (shouldEnd) {
+                textRanges.push({ from, to: i });
+                from = 0;
+            };
+        }
+        return textRanges;
+    }
+
+    wrap(wrapper: TextWrapper, priortity: 0 | 1 | 2 = 1) {
+        this.wrapper[priortity].push(wrapper)
+        return this;
+    }
+
+    wrapAll(mark: string, wrapper: [string, string], option?: FindOption) {
+        const textRanges = this.findMark(mark, option)
+
+        textRanges.forEach(textRange => this.wrap({
+            ...textRange,
+            before: wrapper[0],
+            after: wrapper[1]
+        })
+        )
+    }
 
     constructor(node: Node) {
         this.node = node;
-        this.texts = new Texts(node)
-        this.wrap = (wrapper: ITextWrapper) => {
-            this.texts.wrap(wrapper);
-            return this;
-        };
+        this.texts = [...Node.texts(node)].map(t => t[0])
     }
 
+    //参考draft.js
     render() {
-        return this.texts.render()
+        let str = this.texts.map(text => {
+            return {
+                text, before: Array<string>(), after: Array<string>()
+            }
+        });//[{text,before,after},...]
+        this.wrapper.forEach(w => w.forEach(
+            wrapper => {
+                str[wrapper.from || 0].before.push(wrapper.before);
+                str[wrapper.to === undefined ? (str.length - 1) : wrapper.to].after.unshift(wrapper.after);
+            }
+        ))
+
+        return str.map(v => v.before.join('') + v.text.text + v.after.join('')).join('')
     }
 }
 
-const serialize = (node: Node) => {
-    const nnn = Node
 
-    let output = serializeNode(node);
-
-    //去除重复符号
-    //\*{4}|\/{4}|\-{4}|\_{4}
-    let symbols = '*/-_'.split('').map(value =>
-        `\\${value}{4}`
-    ).join('|')
-    symbols = `${symbols}`
-    let flag = new RegExp(symbols, 'g')
-    while (flag.test(output)) {
-        output = output.replace(flag, '')
-    }
-
-    console.log(output)
-
-    return output
-}
-
-export const renderSerialize = (editor: CustomEditor) => {
+const serialize = (editor: CustomEditor) => {
     let str = Array<string>();
     editor.children.map((node: Descendant) => {
         const serializer = new Serializer(node);
+
         serializeMap.text.forEach(t => t(serializer))
-        str.push(serializer.render())
+
+        str.push('<p>' + serializer.render() + "</p>")
     })
-    console.log(str, 11);
 
     return str.join('');
 }
@@ -156,27 +191,16 @@ const serializeMap: ISerializeMap = {
         //inline
         //合并具有相同mark的Text
         (serializer) => {
-            let texts = serializer.texts.t;
-            let temp = Array<{ mark: string, index: number }>();
-            texts.forEach(([text], index) => {
-                Object.keys(text).forEach(mark => {
-                    if (mark === 'text') return
-                    console.log({ temp, mark });
 
-                    if (!temp.some(s => s.mark === mark)) temp.push({ mark, index })
-                });
-                temp.forEach(s => {
-                    if (index === 0) return
-                let kk  = Math.floor(Math.random()*100).toString()
+            [
+                ['underline', '__'], ['deleted', '--'], ['italic', '//'], ['bold', '**']
+            ].forEach(([mark, wrap]) => {
+                serializer.wrapAll(mark, [wrap, wrap])
+            })
 
-                    if (!text[s.mark]) serializer.wrap({
-                        from: s.index,
-                        to: index-1,
-                        before: kk,
-                        after: kk
-                    })
-                })
-            });
+            // serializer.wrapAll('color', ['##|', '##'], {
+            //     matchValue: (texts, i) => [texts[i].color === texts[i + 1]?.color] 需要color一致
+            // }) 
 
             return serializer
         }
