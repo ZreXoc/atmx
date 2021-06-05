@@ -1,11 +1,9 @@
 import React, { useCallback, useState } from "react";
-import { Node, Range, Element, Path, BaseRange } from "slate"
-import { ReactEditor, useSlate } from "slate-react"
+import { Node } from "slate"
+import { useSlate } from "slate-react"
 
 import { CirclePicker, ColorResult } from 'react-color'
 import { Layout, Menu } from "antd";
-import { Text } from "slate";
-import { CustomElement } from "../type";
 import { CustomCommand } from "../command/command";
 
 const { SubMenu } = Menu;

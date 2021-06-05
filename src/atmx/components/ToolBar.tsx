@@ -5,7 +5,7 @@ import * as Icon from "@ant-design/icons"
 import { Editor, Transforms, Range } from "slate";
 import {  useSlate} from "slate-react";
 import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
-import serialize,{renderSerialize} from "../../wikidot/serialize";
+import serialize from "../../wikidot/serialize";
 
 const { inline, block } = style;
 
@@ -16,7 +16,6 @@ const ToolBar: React.FC = props => {
         <>
             <Space split={<Divider type="vertical" />}>
                 <div className='header'>
-                    <Button onClick={()=>console.log(renderSerialize(editor))}>11</Button>
                     <Dropdown.Button title={block.headerOne.title} size='small' type='ghost' trigger={["hover"]}
                         overlay={
                             <Menu onClick={
