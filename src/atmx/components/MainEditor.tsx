@@ -20,6 +20,7 @@ const MainEditor: React.FC = props => {
         || [{ "type": "header-three", "children": [{ "text": "你" }, { "text": "好！", "italic": true }] }, { "type": "", "children": [{ "text": "欢迎测试的发送发达撒分" }] }, { "type": "paragraph", "children": [{ "text": "不要清空后输入中文", "italic": true }] }, { "type": "paragraph", "children": [{ "text": "不要使用手机输入法", "italic": true, "underline": true, "bold": true }] }, { "type": "paragraph", "children": [{ "text": "左上可导出（链接暂不可）", "italic": true, "underline": true }] }, { "type": "paragraph", "children": [{ "text": "右键打开链接", "deleted": true }, { "text": " 暂不可用" }] }, { "type": "paragraph", "children": [{ "text": "" }, { "type": "link", "url": "http://smlt.wikidot.com/zeexoc:wdot", "children": [{ "text": "link", "italic": true, "underline": true }] }, { "text": "" }] }]
     )
 
+
     const renderElement = useCallback(props => {
         let element;
         Object.values(style.block).some(block => {

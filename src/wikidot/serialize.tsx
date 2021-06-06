@@ -188,7 +188,6 @@ const serializeMap: ISerializeMap = {
             const nn = Node
             //TODO 将path加入serializer后在实现block嵌套和link等带参渲染
             const matchType = (type:string,d:()=>any)=>Node.matches(serializer.node, {type,children:[]})?d():null;
-            debugger
             matchType('header-one',()=>serializer.pretend('+ '))
             matchType('header-two',()=>serializer.pretend('++ '))
             matchType('header-three',()=>serializer.pretend('+++ '))
