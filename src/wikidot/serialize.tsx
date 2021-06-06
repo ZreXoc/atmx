@@ -64,38 +64,7 @@ type TextWrapper = TextRange & {
 }
 
 type FindOption = {
-    matchValue?: (texts: Text[], index: number) => [shouldStart:boolean|undefined,shouldEnd:boolean|undefined]
-
-}
-class Texts {
-    t: NodeEntry<FormattedText>[];
-
-    readonly wrapper = Array<Array<TextWrapper>>([], [], []);
-
-    wrap(wrapper: TextWrapper, priortity: 0 | 1 | 2 = 1) {
-        this.wrapper[priortity].push(wrapper)
-        return this;
-    }
-
-    constructor(node: Node) {
-        this.t = [...Node.texts(node)]
-    }
-    //参考draft.js
-    render() {
-        let str = this.t.map(value => {
-            return {
-                text: value[0].text, before: Array<string>(), after: Array<string>()
-            }
-        });//[{text,before,after},...]
-        this.wrapper.forEach(w => w.forEach(
-            wrapper => {
-                str[wrapper.from || 0].before.push(wrapper.before);
-                str[wrapper.to || (str.length - 1)].after.unshift(wrapper.after);
-            }
-        ))
-
-        return str.map(v => v.before.join('') + v.text + v.after.join('')).join('')
-    }
+    match?: (texts: Text[], index: number) => [asStart: boolean | undefined, asEnd: boolean | undefined]
 }
 
 class Serializer {
@@ -109,39 +78,45 @@ class Serializer {
     findMark(mark: string, option?: FindOption) {
         let { texts } = this;
 
-        let from = 0;
-        let textRanges = new Array<TextRange>()
+        let start = 0;
+        let fragments = new Array<{ range: TextRange, texts: Text[] }>()
 
         for (let i = 0; i < texts.length; i++) {
-            const current = texts[i], next = texts[i + 1]
+            const [
+                asStart = !!(!texts[i][mark] && texts[i + 1] && texts[i + 1][mark]),
+                asEnd = !!(texts[i][mark] && !(texts[i + 1] && texts[i + 1][mark]))
+            ] = option?.match ? option.match(texts, i) : []
 
-            let shouldStart = !current[mark] && next && next[mark];
-            let shouldEnd = current[mark] && !(next && next[mark]);
+            //if (mark === 'bold') debugger
 
-            if (option?.matchValue) [shouldStart=shouldStart,shouldEnd=shouldEnd] = option.matchValue(texts, i);
-
-            if (shouldStart) from = i + 1;
-            if (shouldEnd) {
-                textRanges.push({ from, to: i });
-                from = 0;
+            if (asStart) start = i + 1;
+            if (asEnd) {
+                fragments.push({ range: { from: start, to: i }, texts: texts.slice(start, i + 1) });
+                start = i + 1;
             };
         }
-        return textRanges;
+        return fragments;
     }
 
-    wrap(wrapper: TextWrapper, priortity: 0 | 1 | 2 = 1) {
+    pretend = (text: string,priortity: 0 | 1 | 2 = 0) => this.wrapText({ from: 0, to: 0, before: text, after: '' },priortity)
+    append = (text: string,priortity: 0 | 1 | 2 = 0) => this.wrapText({ from: this.texts.length - 1, to: this.texts.length - 1, before: '', after: text },priortity)
+
+    wrapText(wrapper: TextWrapper, priortity: 0 | 1 | 2 = 1) {
         this.wrapper[priortity].push(wrapper)
         return this;
     }
 
-    wrapAll(mark: string, wrapper: [string, string], option?: FindOption) {
-        const textRanges = this.findMark(mark, option)
-
-        textRanges.forEach(textRange => this.wrap({
-            ...textRange,
-            before: wrapper[0],
-            after: wrapper[1]
-        })
+    wrapAllText(mark: string, wrapper: (texts: Text[]) => [before: string, after: string], option?: FindOption) {
+        const fragments = this.findMark(mark, option)
+        fragments.forEach(({ range, texts }, i) => {
+            const [before, after] = wrapper(texts);
+            this.wrapText({
+                ...range,
+                before,
+                after
+            }
+            )
+        }
         )
     }
 
@@ -159,8 +134,8 @@ class Serializer {
         });//[{text,before,after},...]
         this.wrapper.forEach(w => w.forEach(
             wrapper => {
-                str[wrapper.from || 0].before.push(wrapper.before);
-                str[wrapper.to === undefined ? (str.length - 1) : wrapper.to].after.unshift(wrapper.after);
+                str[wrapper.from].before.push(wrapper.before);
+                str[wrapper.to].after.unshift(wrapper.after);
             }
         ))
 
@@ -174,37 +149,53 @@ const serialize = (editor: CustomEditor) => {
     editor.children.map((node: Descendant) => {
         const serializer = new Serializer(node);
 
-        serializeMap.text.forEach(t => t(serializer))
+        serializeMap.inline.forEach(t => t(serializer))
+        serializeMap.block.forEach(t => t(serializer))
 
         str.push('<p>' + serializer.render() + "</p>")
     })
+
 
     return str.join('');
 }
 
 interface ISerializeMap {
-    text: Array<(arg0: Serializer) => Serializer>
+    inline: Array<(serializer: Serializer) => Serializer>
+    block: Array<(serializer: Serializer) => Serializer>
 }
 
 const serializeMap: ISerializeMap = {
-    text: [
-        //inline
+    inline: [
         //合并具有相同mark的Text
         (serializer) => {
 
             [
                 ['underline', '__'], ['deleted', '--'], ['italic', '//'], ['bold', '**']
-            ].forEach(([mark, wrap]) => {
-                serializer.wrapAll(mark, [wrap, wrap])
-            })
+            ].forEach(([mark, wrap]) =>
+                serializer.wrapAllText(mark, () => [wrap, wrap])
+            )
 
-            // serializer.wrapAll('color', ['##|', '##'], {
-            //     matchValue: (texts, i) => [texts[i].color === texts[i + 1]?.color] 需要color一致
-            // }) 
+            serializer.wrapAllText('color', texts => [`##${texts[0]?.color?.slice(1)}|`, '##'], {//去除16进制颜色码的'#'
+                match: (texts, i) => [, texts[i].color !== undefined && texts[i].color !== texts[i + 1]?.color] //需要color一致
+            })
 
             return serializer
         }
 
+    ],
+    block: [
+        (serializer) => {
+            const nn = Node
+            //TODO 将path加入serializer后在实现block嵌套和link等带参渲染
+            const matchType = (type:string,d:()=>any)=>Node.matches(serializer.node, {type,children:[]})?d():null;
+            debugger
+            matchType('header-one',()=>serializer.pretend('+ '))
+            matchType('header-two',()=>serializer.pretend('++ '))
+            matchType('header-three',()=>serializer.pretend('+++ '))
+            matchType('block-quote',()=>serializer.pretend('> '))
+
+            return serializer
+        }
     ]
 }
 
