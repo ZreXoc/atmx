@@ -1,57 +1,6 @@
-import escapeHtml from 'escape-html'
-import { Descendant, NodeEntry } from 'slate';
-import { Ancestor, Node, Text } from 'slate'
-import { useSlate } from 'slate-react';
-import { CustomEditor, CustomElement, FormattedText } from 'src/atmx';
-
-
-const serializeText = (node: Text) => {
-    const text = [node.text]
-
-    if (node.hasOwnProperty('bold')) {
-        text.unshift("**");
-        text.push('**');
-    }
-    if (node.hasOwnProperty('italic')) {
-        text.unshift("//");
-        text.push('//');
-    }
-    if (node.hasOwnProperty('underline')) {
-        text.unshift("__");
-        text.push('__');
-    }
-    if (node.hasOwnProperty('deleted')) {
-        text.unshift("--");
-        text.push('--');
-    }
-
-    return escapeHtml(text.join(''))
-}
-
-
-
-const serializeNode = (node: Node): string => {
-    if (Text.isText(node)) {
-        return serializeText(node)
-    }
-
-    const children = node.children.map((n: Node) => serializeNode(n)).join('')
-
-    switch ((node as CustomElement).type) {
-        case 'quote':
-            return `<blockquote><p>${children}</p></blockquote>`
-        case 'paragraph':
-            return `<p>${children}</p>`
-        case 'header-one':
-            return `<p>+ ${children}</p>`
-        case 'header-two':
-            return `<p>++ ${children}</p>`
-        case 'header-three':
-            return `<p>+++ ${children}</p>`
-        default:
-            return `${children}`
-    }
-}
+import { Descendant, NodeEntry, Path } from 'slate';
+import { Node, Text } from 'slate'
+import { CustomEditor } from 'src/atmx';
 
 type TextRange = {
     from: number;
@@ -67,39 +16,70 @@ type FindOption = {
     match?: (texts: Text[], index: number) => [asStart: boolean | undefined, asEnd: boolean | undefined]
 }
 
+enum WrapType {
+    pretend,
+    attent
+}
+
+class TextWrapper2 {
+    before = new Array<string[]>(5);
+    text: Text;
+    after = new Array<string[]>(5);
+
+    wrap(
+        [before, after]: [string, string],
+        option?: {
+            priortity: 0 | 1 | 2 | 3 | 4
+            type: [WrapType, WrapType]
+        }) {
+        option = Object.assign({
+            priortity: 2
+        }, option)
+        option.type[0] === WrapType.pretend ? this.before[option.priortity].unshift(before) : this.before[option.priortity].push(before);
+        option.type[1] === WrapType.pretend ? this.after[option.priortity].unshift(after) : this.after[option.priortity].unshift(after);
+    }
+
+    toString = () => this.before.map(t => t.join('')).join('') + this.text.text + this.after.map(t => t.join('')).join('')
+
+    constructor(text: Text) {
+        this.text = text;
+    }
+}
+
 class Serializer {
     readonly node: Node;
 
-    readonly texts: Text[];
+    readonly texts: NodeEntry<Text>[];
 
-    readonly wrapper = Array<Array<TextWrapper>>([], [], []);
+    readonly pureTexts: Text[];
 
+    readonly wrapper2 = new Map<Path, TextWrapper2>()
+
+    readonly wrapper = new Array<Array<TextWrapper>>([], [], []);
 
     findMark(mark: string, option?: FindOption) {
-        let { texts } = this;
+        let { pureTexts } = this;
 
         let start = 0;
         let fragments = new Array<{ range: TextRange, texts: Text[] }>()
 
-        for (let i = 0; i < texts.length; i++) {
+        for (let i = 0; i < pureTexts.length; i++) {
             const [
-                asStart = !!(!texts[i][mark] && texts[i + 1] && texts[i + 1][mark]),
-                asEnd = !!(texts[i][mark] && !(texts[i + 1] && texts[i + 1][mark]))
-            ] = option?.match ? option.match(texts, i) : []
-
-            //if (mark === 'bold') debugger
+                asStart = !!(!pureTexts[i][mark] && pureTexts[i + 1] && pureTexts[i + 1][mark]),
+                asEnd = !!(pureTexts[i][mark] && !(pureTexts[i + 1] && pureTexts[i + 1][mark]))
+            ] = option?.match ? option.match(pureTexts, i) : []
 
             if (asStart) start = i + 1;
             if (asEnd) {
-                fragments.push({ range: { from: start, to: i }, texts: texts.slice(start, i + 1) });
+                fragments.push({ range: { from: start, to: i }, texts: pureTexts.slice(start, i + 1) });
                 start = i + 1;
             };
         }
         return fragments;
     }
 
-    pretend = (text: string,priortity: 0 | 1 | 2 = 0) => this.wrapText({ from: 0, to: 0, before: text, after: '' },priortity)
-    append = (text: string,priortity: 0 | 1 | 2 = 0) => this.wrapText({ from: this.texts.length - 1, to: this.texts.length - 1, before: '', after: text },priortity)
+    pretend = (text: string, priortity: 0 | 1 | 2 = 0) => this.wrapText({ from: 0, to: 0, before: text, after: '' }, priortity)
+    append = (text: string, priortity: 0 | 1 | 2 = 0) => this.wrapText({ from: this.pureTexts.length - 1, to: this.pureTexts.length - 1, before: '', after: text }, priortity)
 
     wrapText(wrapper: TextWrapper, priortity: 0 | 1 | 2 = 1) {
         this.wrapper[priortity].push(wrapper)
@@ -114,20 +94,22 @@ class Serializer {
                 ...range,
                 before,
                 after
-            }
-            )
-        }
-        )
+            });
+        });
     }
 
     constructor(node: Node) {
         this.node = node;
-        this.texts = [...Node.texts(node)].map(t => t[0])
+        this.texts = [...Node.texts(node)];
+        this.pureTexts = this.texts.map(t => t[0]);
+        console.log(this.wrapper2);
+        
+        this.texts.forEach(text => this.wrapper2.set(text[1], new TextWrapper2(text[0])))
     }
 
     //参考draft.js
     render() {
-        let str = this.texts.map(text => {
+        let str = this.pureTexts.map(text => {
             return {
                 text, before: Array<string>(), after: Array<string>()
             }
@@ -146,6 +128,8 @@ class Serializer {
 
 const serialize = (editor: CustomEditor) => {
     let str = Array<string>();
+    const serializerEX = new Serializer(editor);
+
     editor.children.map((node: Descendant) => {
         const serializer = new Serializer(node);
 
@@ -187,11 +171,12 @@ const serializeMap: ISerializeMap = {
         (serializer) => {
             const nn = Node
             //TODO 将path加入serializer后在实现block嵌套和link等带参渲染
-            const matchType = (type:string,d:()=>any)=>Node.matches(serializer.node, {type,children:[]})?d():null;
-            matchType('header-one',()=>serializer.pretend('+ '))
-            matchType('header-two',()=>serializer.pretend('++ '))
-            matchType('header-three',()=>serializer.pretend('+++ '))
-            matchType('block-quote',()=>serializer.pretend('> '))
+            //用Node.level实现
+            const matchType = (type: string, d: () => any) => Node.matches(serializer.node, { type, children: [] }) ? d() : null;
+            matchType('header-one', () => serializer.pretend('+ '))
+            matchType('header-two', () => serializer.pretend('++ '))
+            matchType('header-three', () => serializer.pretend('+++ '))
+            matchType('block-quote', () => serializer.pretend('> '))
 
             return serializer
         }
