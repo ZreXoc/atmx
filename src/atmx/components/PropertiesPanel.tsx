@@ -4,7 +4,7 @@ import { useSlate } from "slate-react"
 
 import { CirclePicker, ColorResult } from 'react-color'
 import { Layout, Menu } from "antd";
-import { CustomCommand } from "../command/command";
+import { CustomCommand } from "../command";
 
 const { SubMenu } = Menu;
 const { Header, Content, Footer, Sider } = Layout;

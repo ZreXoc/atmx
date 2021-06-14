@@ -1,7 +1,9 @@
 export * from './type'
 export * from './style'
 
-export * from './command/command'
+export * from './command/'
+export * from './serialize/'
+
 
 export * from './components/MainEditor';
 export * from './components/ToolBar'

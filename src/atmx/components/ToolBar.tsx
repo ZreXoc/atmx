@@ -6,6 +6,7 @@ import { Editor, Transforms, Range } from "slate";
 import {  useSlate} from "slate-react";
 import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
 import serialize from "../../wikidot/serialize";
+import {serialize as serialize2} from '..';
 
 const { inline, block } = style;
 
@@ -16,6 +17,7 @@ const ToolBar: React.FC = props => {
         <>
             <Space split={<Divider type="vertical" />}>
                 <div className='header'>
+                    <AntdButton onClick={()=>serialize2(editor)}>ss</AntdButton>
                     <Dropdown.Button title={block.headerOne.title} size='small' type='ghost' trigger={["hover"]}
                         overlay={
                             <Menu onClick={
