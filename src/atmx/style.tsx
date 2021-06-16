@@ -56,8 +56,6 @@ class CustomLeaf {
     }
 
     render() {
-        console.log(this);
-        
         return (
             <span
                 {...this.props.attributes}
