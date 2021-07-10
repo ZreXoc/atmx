@@ -3,10 +3,9 @@ import { Button as AntdButton, ButtonProps, Dropdown, Divider, Space, Menu, Moda
 import * as Icon from "@ant-design/icons"
 
 import { Editor, Transforms, Range } from "slate";
-import {  useSlate} from "slate-react";
+import { useSlate } from "slate-react";
 import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
-import serialize from "../../wikidot/serialize";
-import {serialize as serialize2} from '..';
+import { serialize } from '..';
 
 const { inline, block } = style;
 
@@ -17,7 +16,7 @@ const ToolBar: React.FC = props => {
         <>
             <Space split={<Divider type="vertical" />}>
                 <div className='header'>
-                    <AntdButton onClick={()=>serialize2(editor)}>ss</AntdButton>
+                    <AntdButton onClick={() => serialize(editor).toString()}>ss</AntdButton>
                     <Dropdown.Button title={block.headerOne.title} size='small' type='ghost' trigger={["hover"]}
                         overlay={
                             <Menu onClick={
@@ -26,7 +25,7 @@ const ToolBar: React.FC = props => {
                                         case 'export':
                                             Modal.confirm({
                                                 title: '导出为wikidot',
-                                                content: <div dangerouslySetInnerHTML={{ __html: serialize(editor) }} />,
+                                                content: <div dangerouslySetInnerHTML={{ __html: serialize(editor).toString() }} />,
                                             });
                                     }
                                 }
@@ -34,7 +33,7 @@ const ToolBar: React.FC = props => {
                                 <Menu.Item
                                     key='export'
                                 >导出
-                                             </Menu.Item>
+                                </Menu.Item>
                             </Menu>
                         }>开始</Dropdown.Button>
                 </div>
@@ -73,8 +72,8 @@ const ToolBar: React.FC = props => {
                         format={block.blockquote}
                         handleClick={(e: React.MouseEvent, editor: CustomEditor) => {
                             const isActive = command.isBlockActive(editor, block.blockquote.key)
-                            const {selection} = editor;
-                            if (!isActive||!Range.isCollapsed(selection as Range)) {
+                            const { selection } = editor;
+                            if (!isActive || !Range.isCollapsed(selection as Range)) {
                                 Transforms.wrapNodes(
                                     editor,
                                     {
@@ -130,7 +129,7 @@ const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & B
 }
 const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode, handleClick?: (e: React.MouseEvent, editor: CustomEditor) => void } & ButtonProps> = (props) => {
     const editor = useSlate()
-    
+
     const { format, icon } = props
     const handleClick = props.handleClick || (() => { command.toggleBlock(editor, format.key) })
     return (

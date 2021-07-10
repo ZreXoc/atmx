@@ -1,17 +1,14 @@
 import React from "react";
-import { useState } from "react";
-import { Layout, Menu } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { Layout } from "antd";
 
-import { MainEditor, ToolBar } from "./atmx";
+import Editor from "./editor";
 
 import "./App.less"
-const { Header, Content, Sider, Footer } = Layout;
 
 const App: React.FC = props => {
     return (
         <Layout>
-            <MainEditor />
+            <Editor />
         </Layout>
     );
 }
