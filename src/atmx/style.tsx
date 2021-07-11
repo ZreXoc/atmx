@@ -29,7 +29,7 @@ export interface styleInterface {
     }
 }
 
-class CustomLeaf {
+export class CustomLeaf {
     readonly props: RenderLeafProps;
 
     readonly className: Array<string> = []
@@ -68,21 +68,6 @@ class CustomLeaf {
         )
     }
 }
-
-export const renderLeaf = (props: RenderLeafProps) => {
-    let leaf = new CustomLeaf(props);
-
-    Object.values(style.inline).forEach(inlineStyle => {
-
-        if (props.leaf.hasOwnProperty(inlineStyle.key)) {
-            inlineStyle.render(leaf);
-        }
-    })
-    
-    if (props.leaf.color) leaf.appendStyle({ color: props.leaf.color })
-    return leaf.render();
-}
-
 
 export const style: styleInterface = {
     inline: {

@@ -1,22 +1,21 @@
-import React from 'react';
-import { Button as AntdButton, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
+import { Button as AntdButton, Layout, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
 import * as Icon from "@ant-design/icons"
 
-import { Editor, Transforms, Range } from "slate";
+import { Node, Editor, Transforms, Range } from "slate";
 import { useSlate } from "slate-react";
-import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle } from "..";
-import { serialize } from '..';
+import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle, Serializer } from "..";
+import { serialize,SerializeMap } from "../serialize";
 
 const { inline, block } = style;
 
-const ToolBar: React.FC = props => {
+const ToolBar: React.FC<{ serializeMap:SerializeMap }> = props => {
     const editor = useSlate();
+    const { serializeMap } = props;
 
     return (
         <>
             <Space split={<Divider type="vertical" />}>
                 <div className='header'>
-                    <AntdButton onClick={() => serialize(editor).toString()}>ss</AntdButton>
                     <Dropdown.Button title={block.headerOne.title} size='small' type='ghost' trigger={["hover"]}
                         overlay={
                             <Menu onClick={
@@ -25,7 +24,7 @@ const ToolBar: React.FC = props => {
                                         case 'export':
                                             Modal.confirm({
                                                 title: '导出为wikidot',
-                                                content: <div dangerouslySetInnerHTML={{ __html: serialize(editor).toString() }} />,
+                                                content: <pre dangerouslySetInnerHTML={{ __html: serialize(editor,serializeMap).toString() }} />,
                                             });
                                     }
                                 }

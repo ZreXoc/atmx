@@ -6,7 +6,7 @@ enum WrapType {
     attent
 }
 
-class SText {
+export class SText {
     readonly text: Text;
     readonly path: Path;
     readonly node: Node;
@@ -29,7 +29,7 @@ class SText {
         const { priortity = 2 } = option;
 
         typeBefore[0] === WrapType.pretend ? this.before[priortity].unshift(before) : this.before[priortity].push(before);
-        typeAfter[1] === WrapType.pretend ? this.after[priortity].unshift(after) : this.after[priortity].unshift(after);
+        typeAfter[1] === WrapType.pretend ? this.after[4 - priortity].unshift(after) : this.after[4 - priortity].unshift(after);
     }
 
     toString() {
@@ -81,7 +81,7 @@ class SText {
 }
 
 
-class Serializer {
+export class Serializer {
     node: Node;
     texts: Generator<NodeEntry<FormattedText>, void, undefined>;
     sTexts: SText[];
@@ -93,12 +93,12 @@ class Serializer {
         }
     }
 
-    *find(sTexts: SText[] = this.sTexts, option: {
+    *find(option: {
         range?: [start?: number, end?: number]
         match: (sText: SText, index: number, sTexts: SText[]) => [asStart: boolean, asEnd: boolean],
         splitBy?: 'none' | 'paragraph',
     }): Generator<[start: number, end: number], void, undefined> {
-        let Ae = SText, Nd = Node
+        let { sTexts } = this;
 
         let [start = 0, end = sTexts.length] = option.range || [];
         if (sTexts === this.sTexts && option.splitBy === 'paragraph') {
@@ -106,7 +106,7 @@ class Serializer {
                 //debugger;
                 if (!sTexts[i + 1] || !SText.hasSameParent(sTexts[i], sTexts[i + 1])) {
                     debugger
-                    for (const range of this.find(sTexts, { ...option, range: [start, i + 1], splitBy: 'none' })) yield range;
+                    for (const range of this.find({ ...option, range: [start, i + 1], splitBy: 'none' })) yield range;
                     start = i + 1;
                 }
             }
@@ -120,6 +120,15 @@ class Serializer {
         }
     }
 
+    findByMark = (mark: string) => this.find({
+        match: (sText, i, sTexts) => {
+            const past = !!sTexts[i - 1]?.getMark(mark) || false, current = !!sTexts[i].getMark(mark), next = !!sTexts[i + 1]?.getMark(mark) || false
+            debugger
+            return [!past && current, current && !next]
+        },
+        splitBy: 'paragraph'
+    });
+
     wrap(value: [before: string, after: string], option: {
         range: [start: number, end: number],
         priortity?: 0 | 1 | 2 | 3 | 4,
@@ -130,6 +139,10 @@ class Serializer {
         this.sTexts[start].wrap([before, ''], option);
         this.sTexts[end].wrap(['', after], option);
         return this;
+    }
+
+    wrapByMark = (mark: string, before: string, after: string = before) => {
+        for (const range of this.findByMark(mark)) this.wrap([before, after], { range })
     }
 
     toString = () => this.sTexts.map(s => s.toString()).join('');
@@ -147,19 +160,10 @@ class Serializer {
     }
 }
 
-export const serialize = (node: Node) => {
+export const serialize = (node: Node, map: SerializeMap) => {
     const serializer = new Serializer(node);
-
-    const findMark = (mark: string) => serializer.find(undefined, {
-        match: (sText, i, sTexts) => {
-            const past = !!sTexts[i - 1]?.getMark(mark) || false, current = !!sTexts[i].getMark(mark), next = !!sTexts[i + 1]?.getMark('bold') || false
-            debugger;
-
-            return [!past && current, current && !next]
-        },
-        splitBy: 'paragraph'
-    });
-    for (const range of findMark('bold')) serializer.wrap(['**', '**'], { range })
-
-    return serializer
+    map.forEach(v => v(serializer));
+    return serializer;
 }
+
+export type SerializeMap = Array<(s: Serializer) => any>
