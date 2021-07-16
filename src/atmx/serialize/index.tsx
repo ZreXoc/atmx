@@ -1,4 +1,4 @@
-import { Node, Element, Text, Path, NodeEntry } from "slate";
+import { Node, Element, Text, Path, NodeEntry, Editor } from "slate";
 import { CustomElement, FormattedText, LinkElement } from "..";
 
 enum WrapType {
@@ -9,7 +9,7 @@ enum WrapType {
 export class SText {
     readonly text: Text;
     readonly path: Path;
-    readonly node: Node;
+    readonly editor: Editor;
 
     headerLevel: 0 | 1 | 2 | 3 = 0;
     quoteLevel: number = 0;
@@ -38,16 +38,16 @@ export class SText {
         return before.join('') + this.text.text + after.join('')
     };
 
-    constructor(text: NodeEntry<Text>, node: Node) {
+    constructor(editor: Editor, text: NodeEntry<Text>) {
+        this.editor = editor;
         [this.text, this.path] = text;
-        this.node = node;
 
         for (let i = 0; i < 5; i++) {
             this.before[i] = new Array<string>();
             this.after[i] = new Array<string>();
         }
 
-        const nodes = Node.levels(node, this.path)
+        const nodes = Node.levels(editor, this.path)
 
         for (let node of nodes) {
 
@@ -72,17 +72,28 @@ export class SText {
         }
     }
 
-    static hasSameParent = (...sTexts: SText[]) =>
+    static hasSameParent = (editor: Editor, ...sTexts: SText[]) =>
         sTexts.every((sText, i) =>
             !sText ? false :
                 i < sTexts.length - 1 ?
-                    Node.parent(sTexts[i].node, sTexts[i].path) === Node.parent(sTexts[i + 1].node, sTexts[i + 1].path) : true)
+                    Node.parent(editor, sTexts[i].path) === Node.parent(editor, sTexts[i + 1].path) : true)
 
+    static inSameParagraph = (editor: Editor, ...sTexts: SText[]) =>
+        sTexts.every((v, i) => {
+            const find = (sText: SText) => {
+                for (const nodeEntry of Node.levels(editor, sText.path, { reverse: true })) {
+                    if (Element.isElement(nodeEntry[0]) && !editor.isInline(nodeEntry[0])) {
+                        return nodeEntry[0];
+                    }
+                }
+            }
+            return sTexts[i + 1] ? find(sTexts[i]) === find(sTexts[i + 1]) : true
+        })
 }
 
 
 export class Serializer {
-    node: Node;
+    editor: Editor;
     texts: Generator<NodeEntry<FormattedText>, void, undefined>;
     sTexts: SText[];
 
@@ -96,23 +107,24 @@ export class Serializer {
     *find(option: {
         range?: [start?: number, end?: number]
         match: (sText: SText, index: number, sTexts: SText[]) => [asStart: boolean, asEnd: boolean],
-        splitBy?: 'none' | 'paragraph',
+        split?: 'none' | 'paragraph',
+        emptyString?: boolean
     }): Generator<[start: number, end: number], void, undefined> {
         let { sTexts } = this;
 
         let [start = 0, end = sTexts.length] = option.range || [];
-        if (sTexts === this.sTexts && option.splitBy === 'paragraph') {
+        if (sTexts === this.sTexts && option.split === 'paragraph') {
             for (let i = 0; i < end; i++) {
-                //debugger;
-                if (!sTexts[i + 1] || !SText.hasSameParent(sTexts[i], sTexts[i + 1])) {
-                    debugger
-                    for (const range of this.find({ ...option, range: [start, i + 1], splitBy: 'none' })) yield range;
+                if (!sTexts[i + 1] || !SText.inSameParagraph(this.editor, sTexts[i], sTexts[i + 1])
+                ) {
+                    for (const range of this.find({ ...option, range: [start, i + 1], split: 'none' })) yield range;
                     start = i + 1;
                 }
             }
         } else {
             for (let i = start; i < end; i++) {
                 const current = sTexts[i];
+                if (!option.emptyString && current.text.text === '') continue;
                 const [asStart, asEnd] = option.match(current, i - start, sTexts.slice(start, end));
                 if (asStart) start = i;
                 if (asEnd) yield [start, i];
@@ -123,10 +135,9 @@ export class Serializer {
     findByMark = (mark: string) => this.find({
         match: (sText, i, sTexts) => {
             const past = !!sTexts[i - 1]?.getMark(mark) || false, current = !!sTexts[i].getMark(mark), next = !!sTexts[i + 1]?.getMark(mark) || false
-            debugger
             return [!past && current, current && !next]
         },
-        splitBy: 'paragraph'
+        split: 'paragraph'
     });
 
     wrap(value: [before: string, after: string], option: {
@@ -147,21 +158,21 @@ export class Serializer {
 
     toString = () => this.sTexts.map(s => s.toString()).join('');
 
-    constructor(node: Node) {
-        this.node = node;
-        this.texts = Node.texts(this.node)
+    constructor(editor: Editor) {
+        this.editor = editor;
+        this.texts = Node.texts(this.editor)
 
         this.sTexts = [];
-        const texts = Node.texts(this.node)
+        const texts = Node.texts(this.editor)
         for (let text of texts) {
-            let sText = new SText(text as NodeEntry<Text>, node);
+            let sText = new SText(editor, text as NodeEntry<Text>);
             this.sTexts.push(sText);
         }
     }
 }
 
-export const serialize = (node: Node, map: SerializeMap) => {
-    const serializer = new Serializer(node);
+export const serialize = (editor: Editor, map: SerializeMap) => {
+    const serializer = new Serializer(editor);
     map.forEach(v => v(serializer));
     return serializer;
 }
