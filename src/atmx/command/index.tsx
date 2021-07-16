@@ -47,7 +47,7 @@ namespace CustomCommand {
 
     Transforms.setNodes(
       editor,
-      { type: isActive ? undefined : key },
+      { type: isActive ? 'paragraph' : key },
       { match: n => Editor.isBlock(editor, n) }
     )
   }

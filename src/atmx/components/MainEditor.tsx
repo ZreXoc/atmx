@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { createEditor} from "slate";
-import { Slate, Editable, withReact, ReactEditor, RenderLeafProps, RenderElementProps } from "slate-react";
+import { Node, Editor, Element, Text, Transforms, Range } from "slate";
+import { Slate, ReactEditor, RenderLeafProps, RenderElementProps } from "slate-react";
 
-import { CustomCommand,CustomEditor } from "..";
+import { CustomCommand, CustomEditor } from "..";
 import { style } from "..";
 
 import { Layout } from "antd";
@@ -10,8 +10,8 @@ import '../index.less';
 
 import isUrl from 'is-url';
 
-const MainEditor: React.FC<{editor:CustomEditor,value:[],setValue:React.Dispatch<any>}> = props => {
-    const {editor,value,setValue} = props;
+const MainEditor: React.FC<{ editor: CustomEditor, value: [], setValue: React.Dispatch<any> }> = props => {
+    const { editor, value, setValue } = props;
 
     return (
         <Layout id={'editor-container'} className="site-layout">
@@ -77,7 +77,6 @@ export const withDefault = (editor: ReactEditor) => {
             insertData(data)
         }
     }
-
     return editor
 }
 

@@ -1,16 +1,20 @@
-import { Button as AntdButton, Layout, ButtonProps, Dropdown, Divider, Space, Menu, Modal } from "antd";
+import { Button as AntdButton, Layout, ButtonProps, Dropdown, Divider, Space, Menu, Modal, message } from "antd";
 import * as Icon from "@ant-design/icons"
 
 import { Node, Editor, Transforms, Range } from "slate";
 import { useSlate } from "slate-react";
 import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle, Serializer } from "..";
-import { serialize,SerializeMap } from "../serialize";
+import { serialize, SerializeMap } from "../serialize";
+import ClipboardJS from "clipboard";
+import isUrl from "is-url";
 
 const { inline, block } = style;
 
-const ToolBar: React.FC<{ serializeMap:SerializeMap }> = props => {
+const ToolBar: React.FC<{ serializeMap: SerializeMap }> = props => {
     const editor = useSlate();
     const { serializeMap } = props;
+
+    new ClipboardJS('#export-copy');
 
     return (
         <>
@@ -24,7 +28,11 @@ const ToolBar: React.FC<{ serializeMap:SerializeMap }> = props => {
                                         case 'export':
                                             Modal.confirm({
                                                 title: '导出为wikidot',
-                                                content: <pre dangerouslySetInnerHTML={{ __html: serialize(editor,serializeMap).toString() }} />,
+                                                content:
+                                                    <>
+                                                        <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize(editor, serializeMap).toString() }} />
+                                                        <Button id='export-copy' data-clipboard-action="copy" data-clipboard-target="#export-output">copy</Button>
+                                                    </>,
                                             });
                                     }
                                 }
@@ -159,9 +167,8 @@ const LinkButton = () => {
                 if (isLinkActive(editor)) {
                     unwrapLink(editor)
                 } else {
-                    const url = window.prompt('Enter the URL of the link:')
-                    if (!url) return
-                    insertLink(editor, url)
+                    const url = window.prompt('Enter the URL of the link:');
+                    url ? isUrl(url) ? insertLink(editor, url) : message.error('不合法的url:' + url) : message.error('url不可为空');
                 }
 
             }}
@@ -170,37 +177,5 @@ const LinkButton = () => {
         </Button>
     )
 }
-
-const BlockquoteButton = () => {
-    const editor = useSlate()
-    return (
-        <Button></Button>
-    )
-}
-
-/*const InsertLink: React.FC<{ editor: CustomEditor }> = props => {
-    const { editor } = props;
-    const getUrl = () => {
-        let [link] = Editor.nodes(editor, {
-            match: n =>
-                !Editor.isEditor(n) && Element.isElement(n) && n.type === 'link',
-        })
-        return link ? link[0].url : ''
-    }
-    return (
-        <>
-            <AntdButton title={'导出暂不可用'}
-                active={CustomCommand.isBlockActive(editor, block.link.key)}
-                onClick={event => {
-                    event.preventDefault()
-                    //setIsModalVisible(true)
-                    const url = window.prompt('Enter the URL of the link:', getUrl())
-                    if (!url) return
-                    CustomCommand.insertLink(editor, url)
-                }}
-            >L</AntdButton>
-        </>
-    )
-}*/
 
 export { ToolBar };
