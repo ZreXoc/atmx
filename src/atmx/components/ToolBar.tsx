@@ -11,7 +11,7 @@ import isUrl from "is-url";
 
 const ToolBar: React.FC<{ renderMap: IRenderMap, serializeMap: SerializeMap }> = props => {
     const editor = useSlate();
-    const { renderMap: { inline, block }, serializeMap } = props;
+    const { renderMap: { inline, block, void: voidStyle }, serializeMap } = props;
 
     new ClipboardJS('#export-copy');
 
@@ -96,12 +96,14 @@ const ToolBar: React.FC<{ renderMap: IRenderMap, serializeMap: SerializeMap }> =
                             }
                         }}
                     >Q</BlockButton>
-                    <BlockButton format={block.numberedList} icon={<Icon.OrderedListOutlined />} />
-                    <BlockButton format={block.bulletedList} icon={<Icon.UnorderedListOutlined />} />
+                    <BlockButton format={block.numberedList}
+                        handleClick={() => command.toggleBlock(editor, block.numberedList.key, { nested: true })} icon={<Icon.OrderedListOutlined />} />
+                    <BlockButton format={block.bulletedList}
+                        handleClick={() => command.toggleBlock(editor, block.bulletedList.key, { nested: true })} icon={<Icon.UnorderedListOutlined />} />
                 </div>
                 <div>
-                    <Button size='small' type="text" icon={<Icon.MinusOutlined />}
-                        onClick={() => command.insertVoid(editor, { type: 'horizontal-line', children: [{ text: '' }] })} />
+                    <BlockButton format={voidStyle.horizontalLine} icon={<Icon.MinusOutlined/>}
+                        handleClick={() => command.insertVoid(editor, { type: 'horizontal-line', children: [{ text: '' }] })} />
                 </div>
             </Space>
         </>
@@ -125,7 +127,7 @@ const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & B
     const editor = useSlate()
     const { format, icon, ...buttonProps } = props
     return (
-        <AntdButton size='small' type="text" icon={icon}
+        <AntdButton size='small' type="text" icon={icon} title={format.title}
             style={{
                 color: command.isMarkActive(editor, format.key) ? "#1890ff" : undefined
             }}
@@ -145,7 +147,7 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode, handle
     const { format, icon } = props
     const handleClick = props.handleClick || (() => { command.toggleBlock(editor, format.key) })
     return (
-        <AntdButton size='small' type="text" icon={icon}
+        <AntdButton size='small' type="text" icon={icon} title={format.title}
             style={{
                 color: command.isBlockActive(editor, format.key) ? "#1890ff" : undefined
             }}

@@ -13,7 +13,10 @@ export class SText {
 
     headerLevel: 0 | 1 | 2 | 3 = 0;
     quoteLevel: number = 0;
+    numberedListLevel: number = 0;
+    bulletedListLevel: number = 0;
     link: undefined | string;
+    horizontalLine: boolean = false;
 
     before = new Array<string[]>(5);
     after = new Array<string[]>(5);
@@ -26,7 +29,7 @@ export class SText {
     }) {
         const [before = '', after = ''] = value;
         const [typeBefore = WrapType.pretend, typeAfter = WrapType.attend] = option.type || [];
-        const { priority: priority = 2 } = option;
+        const { priority = 2 } = option;
 
         typeBefore[0] === WrapType.pretend ? this.before[priority].unshift(before) : this.before[priority].push(before);
         typeAfter[1] === WrapType.pretend ? this.after[4 - priority].unshift(after) : this.after[4 - priority].unshift(after);
@@ -66,8 +69,18 @@ export class SText {
                 case 'block-quote':
                     this.quoteLevel++;
                     break;
+                case 'numbered-list':
+                    this.numberedListLevel++;
+                    break;
+                case 'bulleted-list':
+                    this.bulletedListLevel++;
+                    break;
                 case 'link':
                     this.link = (node[0] as LinkElement).url
+                    break;
+                case 'horizontal-line':
+                    this.horizontalLine = true
+                    break;
             }
         }
     }
@@ -172,7 +185,7 @@ export class Serializer {
 }
 
 export const serialize = (editor: Editor, map: SerializeMap) => {
-    const serializer = new Serializer(editor);    
+    const serializer = new Serializer(editor);
     map.forEach(v => v(serializer));
     return serializer;
 }

@@ -43,27 +43,37 @@ namespace CustomCommand {
 
   const LIST_TYPES = ['numbered-list', 'bulleted-list']
 
-  export const toggleBlock: ICommand<string> = (editor, format) => {
+  export const toggleBlock = (editor: CustomEditor, format: string, option?: {
+    nested?: boolean
+  }) => {
     const isActive = isBlockActive(editor, format)
     const isList = LIST_TYPES.includes(format)
+    const { nested } = option || { nested: false };
 
-    Transforms.unwrapNodes(editor, {
-      match: n =>
-        LIST_TYPES.includes(
-          !Editor.isEditor(n) && Element.isElement(n) ? n.type : ''
-        ),
-      split: true,
-    })
-    const newProperties: Partial<Element> = {
-      type: isActive ? 'paragraph' : isList ? 'list-item' : format,
-    }
-    Transforms.setNodes(editor, newProperties)
+    const { selection } = editor;
 
-    if (!isActive && isList) {
-      const block = { type: format, children: [] }
-      Transforms.wrapNodes(editor, block)
+    if (!isActive || (nested && !Range.isCollapsed(selection as Range))) {
+      Transforms.wrapNodes(
+        editor,
+        {
+          type: format,
+          children: []
+        }
+      );
+      if (isList) Transforms.setNodes(editor, { type: 'list-item' })
+    } else {
+      Transforms.unwrapNodes(editor,
+        {
+          match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === format,
+          split: true
+        }
+      );
+
+      if (isList) Transforms.setNodes(editor, { type: 'paragraph' },
+        { match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'list-item' });
     }
   }
+
 
   export const insertLink = (editor: CustomEditor, url: string) => {
     if (editor.selection) {

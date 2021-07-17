@@ -19,10 +19,15 @@ export type BlockquoteElement = {
     children: CustomText[]
 }
 
-export type CustomElement = {
+export type NumberList = {
+    type: 'number-list'
+    children: CustomText[]
+}
+
+export type CustomElement = CustomVoid|{
     type: string
     children: CustomText[]
-} | ParagraphElement | LinkElement | BlockquoteElement | CustomVoid
+} | ParagraphElement | LinkElement | BlockquoteElement | NumberList 
 
 
 export type FormattedText = {

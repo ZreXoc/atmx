@@ -12,8 +12,12 @@ export type blockStyle = {
     hotkey?: string
 }
 
-export type voidStyle = blockStyle
-
+export type voidStyle = {
+    key: string
+    render(props: RenderElementProps, element?: Element): JSX.Element
+    title?: string
+    hotkey?: string
+}
 export interface IRenderMap {
     inline: {
         [styleName: string]: inlineStyle

@@ -21,8 +21,8 @@ const MainEditor: React.FC<{ editor: CustomEditor, value: [], setValue: React.Di
                     // 在 Local Storage 里保存值
                     const content = JSON.stringify(value)
                     localStorage.setItem('content', content)
-                }}     
-                >
+                }}
+            >
                 {props.children}
             </Slate>
         </Layout>
@@ -30,7 +30,7 @@ const MainEditor: React.FC<{ editor: CustomEditor, value: [], setValue: React.Di
 }
 
 export const withDefault = (editor: ReactEditor) => {
-    const { insertData, insertText, isInline, isVoid } = editor
+    const { insertData, insertText, isInline, isVoid, normalizeNode } = editor
 
     editor.isInline = element => {
         return element.type === 'link' ? true : isInline(element)
@@ -57,6 +57,36 @@ export const withDefault = (editor: ReactEditor) => {
             insertData(data)
         }
     }
+
+    editor.normalizeNode = entry => {
+        const [node, path] = entry
+
+        //parent of 'list-item' must be a list, or its type will be changed into 'paragraph'
+        const LIST_TYPES = ['numbered-list', 'bulleted-list']
+        if (Element.isElement(node) && node.type === 'list-item') {
+            let parent = Node.parent(editor, path);
+            if (Editor.isEditor(parent) || !LIST_TYPES.includes(parent.type)) {
+                Transforms.setNodes(editor, { type: 'paragraph' })
+            }
+        }
+
+        //list.children:{type:'list-item'}[], list.firstChildren:{type:LIST_TYPES}
+        if (Element.isElement(node) && (node.type === 'numbered-list' || node.type === 'bulleted-list')) {
+            let first = true;
+            
+            for (const [child, childPath] of Node.children(editor, path)) {
+                if (Element.isElement(child) && first && LIST_TYPES.includes(child.type))
+                    Transforms.unwrapNodes(editor, { at: childPath, split: true });
+
+                if (Element.isElement(child) && !(child.type === 'list-item' || LIST_TYPES.includes(child.type)))
+                    Transforms.setNodes(editor, { type: 'list-item' });
+                first = false;
+            }
+        }
+
+        normalizeNode(entry)
+    }
+
     return editor
 }
 
