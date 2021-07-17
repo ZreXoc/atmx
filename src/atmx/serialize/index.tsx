@@ -3,7 +3,7 @@ import { CustomElement, FormattedText, LinkElement } from "..";
 
 enum WrapType {
     pretend,
-    attent
+    attend
 }
 
 export class SText {
@@ -21,15 +21,15 @@ export class SText {
     getMark = (mark: string) => this.text[mark]
 
     wrap(value: [before?: string, after?: string], option: {
-        priortity?: 0 | 1 | 2 | 3 | 4,
+        priority?: 0 | 1 | 2 | 3 | 4,
         type?: [WrapType?, WrapType?]
     }) {
         const [before = '', after = ''] = value;
-        const [typeBefore = WrapType.pretend, typeAfter = WrapType.attent] = option.type || [];
-        const { priortity = 2 } = option;
+        const [typeBefore = WrapType.pretend, typeAfter = WrapType.attend] = option.type || [];
+        const { priority: priority = 2 } = option;
 
-        typeBefore[0] === WrapType.pretend ? this.before[priortity].unshift(before) : this.before[priortity].push(before);
-        typeAfter[1] === WrapType.pretend ? this.after[4 - priortity].unshift(after) : this.after[4 - priortity].unshift(after);
+        typeBefore[0] === WrapType.pretend ? this.before[priority].unshift(before) : this.before[priority].push(before);
+        typeAfter[1] === WrapType.pretend ? this.after[4 - priority].unshift(after) : this.after[4 - priority].unshift(after);
     }
 
     toString() {
@@ -142,7 +142,7 @@ export class Serializer {
 
     wrap(value: [before: string, after: string], option: {
         range: [start: number, end: number],
-        priortity?: 0 | 1 | 2 | 3 | 4,
+        priority?: 0 | 1 | 2 | 3 | 4,
         type?: [WrapType?, WrapType?]
     }) {
         const [before, after] = value;
@@ -172,7 +172,7 @@ export class Serializer {
 }
 
 export const serialize = (editor: Editor, map: SerializeMap) => {
-    const serializer = new Serializer(editor);
+    const serializer = new Serializer(editor);    
     map.forEach(v => v(serializer));
     return serializer;
 }

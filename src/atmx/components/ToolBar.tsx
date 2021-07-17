@@ -3,16 +3,15 @@ import * as Icon from "@ant-design/icons"
 
 import { Node, Editor, Transforms, Range } from "slate";
 import { useSlate } from "slate-react";
-import { CustomEditor, CustomCommand as command, style, blockStyle, inlineStyle, Serializer } from "..";
+import { CustomEditor, CustomCommand as command, blockStyle, inlineStyle, Serializer, IRenderMap } from "..";
 import { serialize, SerializeMap } from "../serialize";
 import ClipboardJS from "clipboard";
 import isUrl from "is-url";
 
-const { inline, block } = style;
 
-const ToolBar: React.FC<{ serializeMap: SerializeMap }> = props => {
+const ToolBar: React.FC<{ renderMap: IRenderMap, serializeMap: SerializeMap }> = props => {
     const editor = useSlate();
-    const { serializeMap } = props;
+    const { renderMap: { inline, block }, serializeMap } = props;
 
     new ClipboardJS('#export-copy');
 
@@ -31,7 +30,7 @@ const ToolBar: React.FC<{ serializeMap: SerializeMap }> = props => {
                                                 content:
                                                     <>
                                                         <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize(editor, serializeMap).toString() }} />
-                                                        <Button id='export-copy' data-clipboard-action="copy" data-clipboard-target="#export-output">copy</Button>
+                                                        <AntdButton id='export-copy' data-clipboard-action="copy" data-clipboard-target="#export-output">copy</AntdButton>
                                                     </>,
                                             });
                                     }
@@ -70,7 +69,7 @@ const ToolBar: React.FC<{ serializeMap: SerializeMap }> = props => {
                     />
                     <InlineButton
                         format={inline.deleted}
-                        icon={<Icon.LineOutlined />}
+                        icon={<Icon.StrikethroughOutlined />}
                     />
                 </div>
                 <div>
@@ -95,9 +94,14 @@ const ToolBar: React.FC<{ serializeMap: SerializeMap }> = props => {
                                     { match: n => Editor.isBlock(editor, n) && n['type'] === 'block-quote' }
                                 )
                             }
-
                         }}
                     >Q</BlockButton>
+                    <BlockButton format={block.numberedList} icon={<Icon.OrderedListOutlined />} />
+                    <BlockButton format={block.bulletedList} icon={<Icon.UnorderedListOutlined />} />
+                </div>
+                <div>
+                    <Button size='small' type="text" icon={<Icon.MinusOutlined />}
+                        onClick={() => command.insertVoid(editor, { type: 'horizontal-line', children: [{ text: '' }] })} />
                 </div>
             </Space>
         </>
@@ -119,7 +123,7 @@ const Button: React.FC<{ isActive?: boolean } & ButtonProps> = (props) => {
 
 const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & ButtonProps> = (props) => {
     const editor = useSlate()
-    const { format, icon } = props
+    const { format, icon, ...buttonProps } = props
     return (
         <AntdButton size='small' type="text" icon={icon}
             style={{
@@ -129,6 +133,7 @@ const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & B
                 e.preventDefault()
                 command.toggleMark(editor, format.key)
             }}
+            {...buttonProps}
         >
             {props.children}
         </AntdButton>

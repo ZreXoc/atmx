@@ -1,55 +1,68 @@
 import { Editor, BaseEditor, Transforms, Element, Text, Range } from "slate";
-import "../type";
-import { CustomEditor, CustomElement, LinkElement } from "../type";
+import { CustomEditor, CustomElement, CustomVoid, LinkElement } from "../";
 
-interface ICustomCommand<Args = Object> {
+interface ICommand<Args = Object> {
   (editor: CustomEditor, args: Args): any
 }
 
 namespace CustomCommand {
-  export const isMarkActive: ICustomCommand<string> = (editor, format) => {
+  export const isMarkActive: ICommand<string> = (editor, typeName) => {
     const marks = Editor.marks(editor)
-    return marks ? marks[format] === true : false
+    return marks ? marks[typeName] === true : false
   }
 
-  export const getMark: ICustomCommand<string> = (editor, key) => {
+  export const getMark: ICommand<string> = (editor, typeName) => {
     const marks = Editor.marks(editor)
-    return marks ? marks[key] : null;
+    return marks ? marks[typeName] : null;
   }
 
-  export const toggleMark: ICustomCommand<string> = (editor, key) => {
-    const isActive = isMarkActive(editor, key)
+  export const toggleMark = (editor: CustomEditor, typeName: string, value: any = true) => {
+    const isActive = isMarkActive(editor, typeName)
     if (isActive) {
-      Editor.removeMark(editor, key)
+      Editor.removeMark(editor, typeName)
     } else {
-      Editor.addMark(editor, key, true)
+      Editor.addMark(editor, typeName, value)
     }
   }
 
   export const addMark = Editor.addMark
 
-  export const removeMark: ICustomCommand<string> = (editor, key) => {
-    if (isMarkActive(editor, key)) Editor.removeMark(editor, key)
+  export const removeMark: ICommand<string> = (editor, typeName) => {
+    if (isMarkActive(editor, typeName)) Editor.removeMark(editor, typeName)
   }
 
 
-  export const isBlockActive: ICustomCommand = (editor, format) => {
+  export const isBlockActive: ICommand<string> = (editor, typeName) => {
     const [match] = Editor.nodes(editor, {
       match: n =>
-        !Editor.isEditor(n) && Element.isElement(n) && n.type === format,
+        !Editor.isEditor(n) && Element.isElement(n) && n.type === typeName,
     })
 
     return !!match
   }
 
-  export const toggleBlock: ICustomCommand<string> = (editor, key) => {
-    const isActive = isBlockActive(editor, key)
+  const LIST_TYPES = ['numbered-list', 'bulleted-list']
 
-    Transforms.setNodes(
-      editor,
-      { type: isActive ? 'paragraph' : key },
-      { match: n => Editor.isBlock(editor, n) }
-    )
+  export const toggleBlock: ICommand<string> = (editor, format) => {
+    const isActive = isBlockActive(editor, format)
+    const isList = LIST_TYPES.includes(format)
+
+    Transforms.unwrapNodes(editor, {
+      match: n =>
+        LIST_TYPES.includes(
+          !Editor.isEditor(n) && Element.isElement(n) ? n.type : ''
+        ),
+      split: true,
+    })
+    const newProperties: Partial<Element> = {
+      type: isActive ? 'paragraph' : isList ? 'list-item' : format,
+    }
+    Transforms.setNodes(editor, newProperties)
+
+    if (!isActive && isList) {
+      const block = { type: format, children: [] }
+      Transforms.wrapNodes(editor, block)
+    }
   }
 
   export const insertLink = (editor: CustomEditor, url: string) => {
@@ -88,6 +101,10 @@ namespace CustomCommand {
     }
   }
 
+  export const isVoidActive = isBlockActive
+
+  export const insertVoid = (editor: CustomEditor, element: CustomVoid) =>
+    Transforms.insertNodes(editor, element)
 }
 
 export { CustomCommand }

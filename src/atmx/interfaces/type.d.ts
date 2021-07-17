@@ -22,23 +22,27 @@ export type BlockquoteElement = {
 export type CustomElement = {
     type: string
     children: CustomText[]
-} | ParagraphElement | LinkElement|BlockquoteElement
+} | ParagraphElement | LinkElement | BlockquoteElement | CustomVoid
 
 
-export type FormattedText = { 
+export type FormattedText = {
     text: string
     bold?: true
-    italic?: true 
-    color?:string
- }
+    italic?: true
+    color?: string
+    textAlign?: 'left' | 'center' | 'right'
+}
 
 export type CustomText = FormattedText
 
+export type CustomVoid = ({ type: 'horizontal-line' }) & { children: [{ text: '' }] }
+
 declare module 'slate' {
     interface CustomTypes {
+        Node: CustomEditor | CustomElement | CustomText | CustomVoid
         Editor: CustomEditor
         Element: CustomElement
         Text: CustomText
-        Node: CustomEditor | CustomElement | CustomText
+        Void: CustomVoid
     }
 }
