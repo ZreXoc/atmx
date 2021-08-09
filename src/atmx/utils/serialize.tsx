@@ -6,7 +6,7 @@ enum WrapType {
     attend
 }
 
-export class SText {
+class SText {
     readonly text: Text;
     readonly path: Path;
     readonly editor: Editor;
@@ -104,7 +104,6 @@ export class SText {
         })
 }
 
-
 export class Serializer {
     editor: Editor;
     texts: Generator<NodeEntry<FormattedText>, void, undefined>;
@@ -184,7 +183,7 @@ export class Serializer {
     }
 }
 
-export const serialize = (editor: Editor, map: SerializeMap) => {
+export const serializeWithEditor = (editor: Editor, map: SerializeMap) => {
     const serializer = new Serializer(editor);
     map.forEach(v => v(serializer));
     return serializer;

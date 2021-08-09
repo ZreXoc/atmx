@@ -4,17 +4,16 @@ import { useSlate } from "slate-react"
 
 import { CirclePicker, ColorResult } from 'react-color'
 import { Layout, Menu } from "antd";
-import { CustomCommand } from "../command";
+import { TextCommand } from "..";
 
-const { SubMenu } = Menu;
-const { Header, Content, Footer, Sider } = Layout;
+const { Header, Content} = Layout;
 
 export const PropertiesPanel = () => {
     const editor = useSlate();
     const [page, setPage] = useState('1')
     const [...fragment] = useCallback(
         () => editor.selection ? Node.fragment(editor, editor.selection) : [],
-        [editor.selection],
+        [editor]
     )()
 
     const [...pureText] = useCallback(
@@ -33,10 +32,10 @@ export const PropertiesPanel = () => {
                 </Menu>
             </Header>
             <Content className='site-layout-background'>
-                {page == '1' ?
+                {page === '1' ?
                     <div>
                         <span>text:{pureText?.map(n => n.join('')).join(' ')}</span>
-                        <ColorPicker onChange={(color) =>  CustomCommand.addMark(editor, 'color', color.hex)} />
+                        <ColorPicker onChange={(color) =>  TextCommand.addMark('color', color.hex)} />
                     </div> : null}
             </Content>
         </Layout>

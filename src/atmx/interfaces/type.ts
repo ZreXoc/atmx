@@ -5,28 +5,28 @@ export type CustomEditor = BaseEditor | ReactEditor
 
 export type ParagraphElement = {
     type: 'paragraph'
-    children: CustomText[]
+    children: Descendant[]
 }
 
 export type LinkElement = {
     type: 'link'
     url: string
-    children: Descendant[]
+    children: FormattedText[]
 }
 
 export type BlockquoteElement = {
     type: 'block-quote'
-    children: CustomText[]
+    children: Descendant[]
 }
 
 export type NumberList = {
     type: 'number-list'
-    children: CustomText[]
+    children: Descendant[]
 }
 
 export type CustomElement = CustomVoid|{
     type: string
-    children: CustomText[]
+    children: Descendant[]
 } | ParagraphElement | LinkElement | BlockquoteElement | NumberList 
 
 

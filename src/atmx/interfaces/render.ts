@@ -1,3 +1,6 @@
+import { RenderElementProps } from "slate-react"
+import { CustomLeaf } from ".."
+
 export type inlineStyle = {
     key: string
     render(leaf: CustomLeaf): CustomLeaf

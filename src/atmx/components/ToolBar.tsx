@@ -28,7 +28,7 @@ const ToolBar: React.FC = props => {
                                                 title: '导出为wikidot',
                                                 content:
                                                     <>
-                                                        <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize.toString() }} />
+                                                        <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize().toString() }} />
                                                         <AntdButton id='export-copy' data-clipboard-action="copy" data-clipboard-target="#export-output">copy</AntdButton>
                                                     </>,
                                             });
