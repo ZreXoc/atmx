@@ -1,17 +1,16 @@
-import { Button as AntdButton, Layout, ButtonProps, Dropdown, Divider, Space, Menu, Modal, message } from "antd";
-import * as Icon from "@ant-design/icons"
-
-import { Node, Editor, Transforms, Range } from "slate";
-import { useSlate } from "slate-react";
-import { CustomEditor, CustomCommand as command, blockStyle, inlineStyle, Serializer, IRenderMap } from "..";
-import { serialize, SerializeMap } from "../serialize";
+import * as Icon from "@ant-design/icons";
+import { Button as AntdButton, ButtonProps, Divider, Dropdown, Menu, message, Modal, Space } from "antd";
 import ClipboardJS from "clipboard";
 import isUrl from "is-url";
+import { Editor, Range, Transforms } from "slate";
+import { useSlate } from "slate-react";
+import { blockStyle, CustomEditor, inlineStyle, TextCommand as command, useEditorConfig } from "..";
 
 
-const ToolBar: React.FC<{ renderMap: IRenderMap, serializeMap: SerializeMap }> = props => {
-    const editor = useSlate();
-    const { renderMap: { inline, block, void: voidStyle }, serializeMap } = props;
+
+const ToolBar: React.FC = props => {
+    const { renderMap,serialize } = useEditorConfig();
+    const { inline, block, void: voidStyle } = renderMap;
 
     new ClipboardJS('#export-copy');
 
@@ -29,7 +28,7 @@ const ToolBar: React.FC<{ renderMap: IRenderMap, serializeMap: SerializeMap }> =
                                                 title: '导出为wikidot',
                                                 content:
                                                     <>
-                                                        <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize(editor, serializeMap).toString() }} />
+                                                        <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize.toString() }} />
                                                         <AntdButton id='export-copy' data-clipboard-action="copy" data-clipboard-target="#export-output">copy</AntdButton>
                                                     </>,
                                             });
@@ -77,7 +76,7 @@ const ToolBar: React.FC<{ renderMap: IRenderMap, serializeMap: SerializeMap }> =
                     <BlockButton
                         format={block.blockquote}
                         handleClick={(e: React.MouseEvent, editor: CustomEditor) => {
-                            const isActive = command.isBlockActive(editor, block.blockquote.key)
+                            const isActive = command.isBlockActive(block.blockquote.key)
                             const { selection } = editor;
                             if (!isActive || !Range.isCollapsed(selection as Range)) {
                                 Transforms.wrapNodes(
@@ -97,13 +96,13 @@ const ToolBar: React.FC<{ renderMap: IRenderMap, serializeMap: SerializeMap }> =
                         }}
                     >Q</BlockButton>
                     <BlockButton format={block.numberedList}
-                        handleClick={() => command.toggleBlock(editor, block.numberedList.key, { nested: true })} icon={<Icon.OrderedListOutlined />} />
+                        handleClick={() => command.toggleBlock(block.numberedList.key, { nested: true })} icon={<Icon.OrderedListOutlined />} />
                     <BlockButton format={block.bulletedList}
-                        handleClick={() => command.toggleBlock(editor, block.bulletedList.key, { nested: true })} icon={<Icon.UnorderedListOutlined />} />
+                        handleClick={() => command.toggleBlock(block.bulletedList.key, { nested: true })} icon={<Icon.UnorderedListOutlined />} />
                 </div>
                 <div>
-                    <BlockButton format={voidStyle.horizontalLine} icon={<Icon.MinusOutlined/>}
-                        handleClick={() => command.insertVoid(editor, { type: 'horizontal-line', children: [{ text: '' }] })} />
+                    <BlockButton format={voidStyle.horizontalLine} icon={<Icon.MinusOutlined />}
+                        handleClick={() => command.insertVoid({ type: 'horizontal-line', children: [{ text: '' }] })} />
                 </div>
             </Space>
         </>
@@ -124,16 +123,15 @@ const Button: React.FC<{ isActive?: boolean } & ButtonProps> = (props) => {
 }
 
 const InlineButton: React.FC<{ format: inlineStyle, icon?: React.ReactNode } & ButtonProps> = (props) => {
-    const editor = useSlate()
     const { format, icon, ...buttonProps } = props
     return (
         <AntdButton size='small' type="text" icon={icon} title={format.title}
             style={{
-                color: command.isMarkActive(editor, format.key) ? "#1890ff" : undefined
+                color: command.isMarkActive(format.key) ? "#1890ff" : undefined
             }}
             onClick={e => {
                 e.preventDefault()
-                command.toggleMark(editor, format.key)
+                command.toggleMark(format.key)
             }}
             {...buttonProps}
         >
@@ -145,11 +143,11 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode, handle
     const editor = useSlate()
 
     const { format, icon } = props
-    const handleClick = props.handleClick || (() => { command.toggleBlock(editor, format.key) })
+    const handleClick = props.handleClick || (() => { command.toggleBlock(format.key) })
     return (
         <AntdButton size='small' type="text" icon={icon} title={format.title}
             style={{
-                color: command.isBlockActive(editor, format.key) ? "#1890ff" : undefined
+                color: command.isBlockActive(format.key) ? "#1890ff" : undefined
             }}
             onClick={e => {
                 e.preventDefault()
@@ -162,20 +160,19 @@ const BlockButton: React.FC<{ format: blockStyle, icon?: React.ReactNode, handle
 }
 
 const LinkButton = () => {
-    const editor = useSlate()
     const { isLinkActive, insertLink, unwrapLink } = command;
 
     return (
         <Button
             type='text'
-            isActive={command.isLinkActive(editor)}
+            isActive={command.isLinkActive()}
             onMouseDown={event => {
                 event.preventDefault()
-                if (isLinkActive(editor)) {
-                    unwrapLink(editor)
+                if (isLinkActive()) {
+                    unwrapLink()
                 } else {
                     const url = window.prompt('Enter the URL of the link:');
-                    url ? isUrl(url) ? insertLink(editor, url) : message.error('不合法的url:' + url) : message.error('url不可为空');
+                    url ? isUrl(url) ? insertLink(url) : message.error('不合法的url:' + url) : message.error('url不可为空');
                 }
 
             }}

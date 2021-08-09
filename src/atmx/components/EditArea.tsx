@@ -1,28 +1,14 @@
-import { Editable, RenderLeafProps, RenderElementProps } from "slate-react";
-import { NodeEntry, Range } from 'slate';
-import { IRenderMap, useRender } from "..";
+import { Editable } from "slate-react"
+import { useEditorConfig } from ".."
 
-
-type EditableProps = {
-    decorate?: (entry: NodeEntry) => Range[];
-    onDOMBeforeInput?: (event: InputEvent) => void;
-    placeholder?: string;
-    readOnly?: boolean;
-    role?: string;
-    style?: React.CSSProperties;
-    renderElement?: (props: RenderElementProps) => JSX.Element;
-    renderLeaf?: (props: RenderLeafProps) => JSX.Element;
-    as?: React.ElementType;
-} & React.TextareaHTMLAttributes<HTMLDivElement>;
-
-const EditArea: React.FC<EditableProps & {renderMap: IRenderMap }> = props => (
-    <Editable
+export const EditArea: React.FC = () => {
+    const { renderLeaf, renderElement } = useEditorConfig()
+ 
+    return <Editable
         className={'edit-area'}
-        {...useRender(props.renderMap)}
+        renderLeaf={renderLeaf}
+        renderElement={renderElement}
         spellCheck
         autoFocus
-        {...props}
     />
-)
-
-export { EditArea };
+}

@@ -1,4 +1,4 @@
-import { Serializer, SerializeMap, SText } from "../atmx";
+import { Serializer, SerializeMap} from "../atmx";
 
 export const serializeMap: SerializeMap = [
     //inline
