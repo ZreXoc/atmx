@@ -2,10 +2,9 @@ import { Slate, ReactEditor } from "slate-react";
 import { useEditorInfo, BlockNode, InlineNode } from "..";
 import { Layout } from "antd";
 import '../../index.less';
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import React from "react";
 import hotkeys from "hotkeys-js";
-import { Descendant } from "slate";
 
 const MainEditor: React.FC = props => {
     const { editor, nodeMap, originValue } = useEditorInfo();

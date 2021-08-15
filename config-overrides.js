@@ -18,7 +18,9 @@ module.exports = {
             ]
         ),
         addLessLoader({
-            javascriptEnabled: true
+            lessOptions: {
+                javascriptEnabled: true
+            }
         }),
         fixBabelImports("babel-plugin-import", {
             libraryName: "antd-mobile",
@@ -28,7 +30,7 @@ module.exports = {
             libraryName: 'antd',
             libraryDirectory: 'es',
             style: 'less',
-          }),
-        addWebpackResolve({extensions:['.js','.jsx','.d.ts','.ts','.tsx']})
+        }),
+        addWebpackResolve({ extensions: ['.js', '.jsx', '.d.ts', '.ts', '.tsx'] })
     )
 };
