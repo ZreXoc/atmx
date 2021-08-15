@@ -1,4 +1,4 @@
-import { Editor, Element, Transforms, Range } from "slate";
+import { Editor, Element, Transforms, Range, Text } from "slate";
 import { LinkElement, CustomVoid } from "..";
 
 let editor: Editor;
@@ -43,12 +43,12 @@ export function isBlockActive(key: string) {
 
 export const LIST_TYPES = ['numbered-list', 'bulleted-list']
 
-export function toggleBlock(format: string, option?: {
+export function toggleBlock(key: string, option?: {
+    split?: boolean
     nested?: boolean
 }) {
-    const isActive = isBlockActive(format);
-    const isList = LIST_TYPES.includes(format);
-    const { nested } = option || { nested: false };
+    const isActive = isBlockActive(key);
+    const { nested = false, split = false } = option || {};
 
     const { selection } = editor;
 
@@ -56,21 +56,33 @@ export function toggleBlock(format: string, option?: {
         Transforms.wrapNodes(
             editor,
             {
-                type: format,
+                type: key,
                 children: []
             }
         );
-        if (isList) Transforms.setNodes(editor, { type: 'list-item' })
     } else {
-        Transforms.unwrapNodes(editor,
-            {
-                match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === format,
-                split: true
-            }
-        );
+        let isChildText = false;
+        Transforms.unwrapNodes(editor, {
+            match: n => {
+                if (!Editor.isEditor(n) && Element.isElement(n) && n.type === key) {
+                    isChildText = Text.isText(n.children[0]);
+                    return !isChildText
+                }
+                return false
+            },
+            split
+        })
 
-        if (isList) Transforms.setNodes(editor, { type: 'paragraph' },
-            { match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'list-item' });
+        if (isChildText)
+            Transforms.setNodes(editor,
+                {
+                    type: 'paragraph',
+                },
+                {
+                    match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === key,
+                    split
+                }
+            );
     }
 }
 
@@ -93,7 +105,7 @@ export function unwrapLink() {
 }
 
 export function wrapLink(url: string) {
-    if (isLinkActive()) {
+    if (isBlockActive('link')) {
         unwrapLink()
     }
 

@@ -1,5 +1,5 @@
 import { Node, Element, Text, Path, NodeEntry, Editor } from "slate";
-import { CustomElement, FormattedText, LinkElement } from "..";
+import { CustomElement, FormattedText, LinkElement, ISerializeRule } from "..";
 
 enum WrapType {
     pretend,
@@ -110,9 +110,9 @@ export class Serializer {
     sTexts: SText[];
 
     *get(match: (sText: SText, index: number, sTexts: SText[]) => boolean)
-        : Generator<[index: number, sTexts: SText[]], void, undefined> {
+        : Generator<[sText: SText, index: number], void, undefined> {
         for (let i = 0; i < this.sTexts.length; i++) {
-            if (match(this.sTexts[i], i, this.sTexts)) yield [i, this.sTexts]
+            if (match(this.sTexts[i], i, this.sTexts)) yield [this.sTexts[i], i]
         }
     }
 
@@ -183,10 +183,8 @@ export class Serializer {
     }
 }
 
-export const serializeWithEditor = (editor: Editor, map: SerializeMap) => {
+export const serializeWithEditor = (editor: Editor, rules: ISerializeRule[]) => {
     const serializer = new Serializer(editor);
-    map.forEach(v => v(serializer));
+    rules.forEach(v => v(serializer));
     return serializer;
 }
-
-export type SerializeMap = Array<(s: Serializer) => any>

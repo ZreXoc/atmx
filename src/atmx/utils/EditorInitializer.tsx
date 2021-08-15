@@ -2,12 +2,12 @@ import isUrl from "is-url";
 import { createEditor, Descendant, Editor, Element, Node, Transforms } from "slate";
 import { withHistory } from "slate-history";
 import { DefaultElement, ReactEditor, RenderElementProps, RenderLeafProps, withReact } from "slate-react";
-import { CustomLeaf, IRenderMap, SerializeMap, Serializer, serializeWithEditor, TextCommand } from "..";
+import { CustomLeaf, EditorConfig, EditorInfo, serializeWithEditor, TextCommand } from "..";
 
 export class EditorInitializer {
     private editor: Editor;
-    private config!: { renderMap: IRenderMap, serializeMap: SerializeMap };
-    private initialValue!: Descendant[];
+    private config!: EditorConfig;
+    private originValue!: Descendant[];
 
     withHistory() {
         withHistory(this.editor);
@@ -15,88 +15,31 @@ export class EditorInitializer {
     };
 
     withAtmx() {
-        const editor = this.editor;
-        const { insertText, isInline, isVoid, normalizeNode } = editor
-        const { insertData } = (editor as ReactEditor);
-
-        editor.isInline = element => {
-            return element.type === 'link' ? true : isInline(element)
-        }
-
-        editor.isVoid = element => {
-            return element.type === 'horizontal-line' ? true : isVoid(element)
-        }
-
-        editor.insertText = text => {
-            if (text && isUrl(text)) {
-                TextCommand.wrapLink(text)
-            } else {
-                insertText(text)
-            }
-        }
-
-        (editor as ReactEditor).insertData = data => {
-            const text = data.getData('text/plain')
-
-            if (text && isUrl(text)) {
-                TextCommand.wrapLink(text)
-            } else {
-                insertData(data)
-            }
-        }
-
-        editor.normalizeNode = entry => {
-            const [node, path] = entry
-
-            //parent of 'list-item' must be a list, or its type will be changed into 'paragraph'
-            const LIST_TYPES = ['numbered-list', 'bulleted-list']
-            if (Element.isElement(node) && node.type === 'list-item') {
-                let parent = Node.parent(editor, path);
-                if (Editor.isEditor(parent) || !LIST_TYPES.includes(parent.type)) {
-                    Transforms.setNodes(editor, { type: 'paragraph' })
-                }
-            }
-
-            //list.children:{type:'list-item'}[], list.firstChildren:{type:LIST_TYPES}
-            if (Element.isElement(node) && (node.type === 'numbered-list' || node.type === 'bulleted-list')) {
-                let first = true;
-
-                for (const [child, childPath] of Node.children(editor, path)) {
-                    if (Element.isElement(child) && first && LIST_TYPES.includes(child.type))
-                        Transforms.unwrapNodes(editor, { at: childPath, split: true });
-
-                    if (Element.isElement(child) && !(child.type === 'list-item' || LIST_TYPES.includes(child.type)))
-                        Transforms.setNodes(editor, { type: 'list-item' });
-                    first = false;
-                }
-            }
-            normalizeNode(entry)
-        }
-
+        withAtmx(this.editor)
         return this;
     }
 
-    setConfig(config: { renderMap: IRenderMap, serializeMap: SerializeMap }) {
+    setConfig(config: EditorConfig) {
         this.config = config;
         return this;
     };
 
     setValue(value: Descendant[]) {
-        this.initialValue = value;
+        this.originValue = value;
         return this;
     }
 
     build() {
-        const { editor, initialValue, config: { renderMap, serializeMap } } = this;
+        const { editor, originValue, config: { nodeMap, serializeRules } } = this;
 
-        if (!initialValue) throw Error("\"value\" undefined. use \"setValue()\" to initialize before build")
+        if (!originValue) throw Error("\"value\" undefined. use \"setValue()\" to initialize before build")
 
         const renderLeaf = (props: RenderLeafProps) => {
             let leaf = new CustomLeaf(props);
 
-            Object.values(renderMap.inline).forEach(inlineStyle => {
-                if (props.leaf.hasOwnProperty(inlineStyle.key)) {
-                    inlineStyle.render(leaf);
+            Object.values(nodeMap.inline).forEach(inlineNode => {
+                if (props.leaf.hasOwnProperty(inlineNode.key)) {
+                    inlineNode.render(leaf);
                 }
             })
 
@@ -107,14 +50,7 @@ export class EditorInitializer {
         const renderElement = (props: RenderElementProps) => {
             let element;
 
-            Object.values(renderMap.block).some(ele => {
-                if (props.element.type === ele.key) {
-                    element = ele.render(props);
-                    return true
-                }
-                return false;
-            })
-            Object.values(renderMap.void).some(ele => {
+            Object.values(nodeMap.block).some(ele => {
                 if (props.element.type === ele.key) {
                     element = ele.render(props);
                     return true
@@ -125,11 +61,10 @@ export class EditorInitializer {
             return element || <DefaultElement {...props} />
         }
 
-        const serialize = () => serializeWithEditor(editor, serializeMap);
+        const serialize = () => serializeWithEditor(editor, serializeRules);
 
-        const editorConfig = () => { return { editor, initialValue, renderLeaf, renderElement, renderMap, serialize } };
-
-        return (editorConfig as EditorConfig)
+        const editorInfo = () => { return { editor, originValue, renderLeaf, renderElement, nodeMap, serialize } };
+        return (editorInfo as EditorInfo)
     }
 
     constructor() {
@@ -137,15 +72,82 @@ export class EditorInitializer {
     }
 }
 
-export type EditorConfig = () => {
-    editor: Editor;
-    initialValue: Descendant[]
+const withAtmx = (editor: Editor) => {
+    const { insertText, isInline, isVoid, normalizeNode } = editor
+    const { insertData } = (editor as ReactEditor);
 
-    renderLeaf: (props: RenderLeafProps) => JSX.Element;
+    editor.isInline = element => {
+        return element.type === 'link' ? true : isInline(element)
+    }
 
-    renderElement: (props: RenderElementProps) => JSX.Element;
+    editor.isVoid = element => {
+        return element.type === 'horizontal-line' ? true : isVoid(element)
+    }
 
-    renderMap: IRenderMap;
+    editor.insertText = text => {
+        if (text && isUrl(text)) {
+            TextCommand.wrapLink(text)
+        } else {
+            insertText(text)
+        }
+    }
 
-    serialize: () => Serializer;
+    (editor as ReactEditor).insertData = data => {
+        const text = data.getData('text/plain')
+
+        if (text && isUrl(text)) {
+            TextCommand.wrapLink(text)
+        } else {
+            insertData(data)
+        }
+    }
+
+    editor.normalizeNode = entry => {
+        const [node, path] = entry
+        const LIST_TYPES = ['numbered-list', 'bulleted-list']
+
+        if (Element.isElement(node) &&
+            (node.type === 'paragraph' || node.type.match(/header-*/) || node.type === 'list-item')
+        ) {
+            for (const [child, childPath] of Node.children(editor, path)) {
+                if (Element.isElement(child) && !editor.isInline(child)) {
+                    Transforms.unwrapNodes(editor, { at: childPath });
+                    return;
+                }
+            }
+        }
+
+        //parent of 'list-item' must be a list, or its type will be changed into 'paragraph'
+        //descendant of 'list-item' must be inline
+        if (Element.isElement(node) && node.type === 'list-item') {
+            let parent = Node.parent(editor, path);
+            if (Editor.isEditor(parent) || !LIST_TYPES.includes(parent.type)) {
+                Transforms.setNodes(editor, { type: 'paragraph' }, { at: path });
+                return;
+            }
+        }
+
+        //list.children:{type:'list-item'}[], list.firstChildren:{type:LIST_TYPES}
+        if (Element.isElement(node) && LIST_TYPES.includes(node.type)) {
+            let isFirstChild = true;
+            for (const [child, childPath] of Node.children(editor, path)) {
+                if (Element.isElement(child) && isFirstChild && LIST_TYPES.includes(child.type))
+                    Transforms.unwrapNodes(editor, { at: childPath, split: true });
+
+                if (Element.isElement(child) && !(child.type === 'list-item' || LIST_TYPES.includes(child.type)))
+                    Transforms.setNodes(editor, { type: 'list-item' }, { at: childPath });
+                isFirstChild = false;
+            }
+
+            /*const parent = Node.parent(editor,path);
+            const parentPath = path.slice(0,path.length-1)
+            for (const [child, childPath] of Node.children(editor, parentPath)) {
+                if
+            }*/
+
+            return
+        }
+
+        normalizeNode(entry)
+    }
 }

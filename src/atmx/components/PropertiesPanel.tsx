@@ -6,7 +6,7 @@ import { CirclePicker, ColorResult } from 'react-color'
 import { Layout, Menu } from "antd";
 import { TextCommand } from "..";
 
-const { Header, Content} = Layout;
+const { Header, Content } = Layout;
 
 export const PropertiesPanel = () => {
     const editor = useSlate();
@@ -35,7 +35,7 @@ export const PropertiesPanel = () => {
                 {page === '1' ?
                     <div>
                         <span>text:{pureText?.map(n => n.join('')).join(' ')}</span>
-                        <ColorPicker onChange={(color) =>  TextCommand.addMark('color', color.hex)} />
+                        <ColorPicker onChange={(color) => TextCommand.addMark('color', color.hex)} />
                     </div> : null}
             </Content>
         </Layout>

@@ -1,13 +1,25 @@
 import { Slate, ReactEditor } from "slate-react";
-import { useDefaultValue, TextCommand, EditorConfig } from "..";
+import { useEditorInfo, BlockNode, InlineNode } from "..";
 import { Layout } from "antd";
 import '../../index.less';
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import React from "react";
+import hotkeys from "hotkeys-js";
+import { Descendant } from "slate";
 
-const MainEditor: React.FC<{ editorConfig: EditorConfig }> = props => {
-    const { editor, initialValue } = props.editorConfig();
-    const [value, setValue] = useState(useDefaultValue(initialValue, false));
-    TextCommand.setEditor(editor);
+const MainEditor: React.FC = props => {
+    const { editor, nodeMap, originValue } = useEditorInfo();
+    const [value, setValue] = useState(originValue);
+
+    //hotkey
+    Object.values(nodeMap).forEach(t => Object.values(t).forEach(n => {
+        const node = n as InlineNode | BlockNode;
+        if (node.hotkey && node.achieve)
+            hotkeys(node.hotkey, e => {
+                e.preventDefault();
+                if (node.achieve) node.achieve(editor);
+            })
+    }));
 
     return (
         <Layout id={'editor-container'} className="site-layout">
