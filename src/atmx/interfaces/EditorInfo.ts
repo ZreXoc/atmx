@@ -4,7 +4,10 @@ import { INodeMap, Serializer } from "..";
 
 export type EditorInfo = () => {
     editor: Editor;
-    originValue: Descendant[]
+
+    originValue: Descendant[];
+
+    initialValue: Descendant[];
 
     renderLeaf: (props: RenderLeafProps) => JSX.Element;
 

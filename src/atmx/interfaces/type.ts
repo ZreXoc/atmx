@@ -8,6 +8,13 @@ export type ParagraphElement = {
     children: Descendant[]
 }
 
+export type AlignElement = {
+    type: 'text-align',
+    children: Descendant[]
+    alignType: 'left' | 'center' | 'right'
+
+}
+
 export type LinkElement = {
     type: 'link'
     url: string
@@ -24,10 +31,10 @@ export type NumberList = {
     children: Descendant[]
 }
 
-export type CustomElement = CustomVoid|{
+export type CustomElement = CustomVoid | {
     type: string
     children: Descendant[]
-} | ParagraphElement | LinkElement | BlockquoteElement | NumberList 
+} | ParagraphElement | LinkElement | BlockquoteElement | NumberList | AlignElement
 
 
 export type FormattedText = {
@@ -35,7 +42,6 @@ export type FormattedText = {
     bold?: true
     italic?: true
     color?: string
-    textAlign?: 'left' | 'center' | 'right'
 }
 
 export type CustomText = FormattedText

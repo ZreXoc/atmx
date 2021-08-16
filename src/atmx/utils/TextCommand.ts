@@ -9,7 +9,7 @@ export const setEditor = (customEditor: Editor) => {
 
 export function isMarkActive(key: string) {
     const marks = Editor.marks(editor);
-    return marks && !!marks[key]
+    return !!marks && !!marks[key]
 }
 
 export function getMark(key: string) {
@@ -43,28 +43,36 @@ export function isBlockActive(key: string) {
 
 export const LIST_TYPES = ['numbered-list', 'bulleted-list']
 
-export function toggleBlock(key: string, option?: {
+export function toggleBlock(ele: string | Element, option?: {
     split?: boolean
     nested?: boolean
 }) {
-    const isActive = isBlockActive(key);
-    const { nested = false, split = false } = option || {};
+    let type: string, element: Element;
+    if (typeof ele === 'string') {
+        type = ele;
+        element = {
+            type: ele,
+            children: []
+        }
+    } else {
+        element = ele;
+        type = element.type
+    }
 
+    const isActive = isBlockActive(element.type);
+    const { nested = false, split = false } = option || {};
     const { selection } = editor;
 
     if (!isActive || (nested && !Range.isCollapsed(selection as Range))) {
         Transforms.wrapNodes(
             editor,
-            {
-                type: key,
-                children: []
-            }
+            element
         );
     } else {
         let isChildText = false;
         Transforms.unwrapNodes(editor, {
             match: n => {
-                if (!Editor.isEditor(n) && Element.isElement(n) && n.type === key) {
+                if (!Editor.isEditor(n) && Element.isElement(n) && n.type === type) {
                     isChildText = Text.isText(n.children[0]);
                     return !isChildText
                 }
@@ -79,7 +87,7 @@ export function toggleBlock(key: string, option?: {
                     type: 'paragraph',
                 },
                 {
-                    match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === key,
+                    match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === type,
                     split
                 }
             );

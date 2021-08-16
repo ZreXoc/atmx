@@ -16,7 +16,7 @@ const MainEditor: React.FC = props => {
         if (node.hotkey && node.achieve)
             hotkeys(node.hotkey, e => {
                 e.preventDefault();
-                if (node.achieve) node.achieve(editor);
+                if (node.achieve) node.achieve(editor,{});
             })
     }));
 

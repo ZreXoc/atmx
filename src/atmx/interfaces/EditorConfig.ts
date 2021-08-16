@@ -21,7 +21,8 @@ export interface InlineNode {
     title?: string;
     //description?:string;
     hotkey?: string;
-    achieve?: (editor: Editor) => any;
+    isActive?: (editor: Editor,attr: object) => boolean,
+    achieve?: (editor: Editor, attr: object) => any;
     render: (customLeaf: CustomLeaf) => CustomLeaf;
 }
 
@@ -30,13 +31,14 @@ export interface BlockNode {
     title?: string;
     //description?:string;
     hotkey?: string;
-    achieve?: (editor: Editor) => any;
-    render: (props: RenderElementProps, element?: Element) => JSX.Element;
+    isActive?: (editor: Editor, attr: object) => boolean,
+    achieve?: (editor: Editor, attr: object) => any;
+    render: (props: RenderElementProps, element: Element) => JSX.Element;
     isVoid?: boolean;
 }
 
 export interface AchievedNode {
-    achieve: (editor: Editor) => any;
+    achieve: (editor: Editor, attr: object) => any;
 }
 
 

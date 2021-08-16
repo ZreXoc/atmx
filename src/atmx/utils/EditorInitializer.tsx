@@ -38,6 +38,7 @@ export class EditorInitializer {
             let leaf = new CustomLeaf(props);
 
             Object.values(nodeMap.inline).forEach(inlineNode => {
+                if(!inlineNode.key) return;
                 if (props.leaf.hasOwnProperty(inlineNode.key)) {
                     inlineNode.render(leaf);
                 }
@@ -52,7 +53,7 @@ export class EditorInitializer {
 
             Object.values(nodeMap.block).some(ele => {
                 if (props.element.type === ele.key) {
-                    element = ele.render(props);
+                    element = ele.render(props, props.element);
                     return true
                 }
                 return false;
@@ -63,7 +64,7 @@ export class EditorInitializer {
 
         const serialize = () => serializeWithEditor(editor, serializeRules);
 
-        const editorInfo = () => { return { editor, originValue, renderLeaf, renderElement, nodeMap, serialize } };
+        const editorInfo = () => { return { editor, originValue, initialValue: editor.children, renderLeaf, renderElement, nodeMap, serialize } };
         return (editorInfo as EditorInfo)
     }
 

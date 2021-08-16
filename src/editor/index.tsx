@@ -1,5 +1,5 @@
 import * as Icon from "@ant-design/icons";
-import { Card, Dropdown, Layout, Menu, Modal, Typography } from "antd";
+import { Button as AntdButton, Card, Dropdown, Layout, Menu, Modal, Row, Typography } from "antd";
 import { useState } from "react";
 import { Transforms, Editor } from "slate";
 import { BlockButton, EditArea, EditorInitializer, InlineButton, MainEditor, PropertiesPanel, StartMenu, ToolBar, useDefaultValue, useEditorInfo } from '../atmx';
@@ -47,41 +47,58 @@ const MyEditor: React.FC = () => {
                         <ToolBar>
                             <StartMenu />
                             <div>
-                                <BlockButton format={block.headerOne} >H1</BlockButton>
-                                <BlockButton format={block.headerTwo} >H2</BlockButton>
-                                <BlockButton format={block.headerThree} >H3</BlockButton>
+                                <Row>
+                                    <BlockButton format={block.headerOne} >H1</BlockButton>
+                                    <BlockButton format={block.headerTwo} >H2</BlockButton>
+                                    <BlockButton format={block.headerThree} >H3</BlockButton>
+                                </Row>
                             </div>
                             <div>
-                                <InlineButton
-                                    format={inline.bold}
-                                    icon={<Icon.BoldOutlined />}
-                                />
-                                <InlineButton
-                                    format={inline.italic}
-                                    icon={<Icon.ItalicOutlined />}
-                                />
-                                <InlineButton
-                                    format={inline.underline}
-                                    icon={<Icon.UnderlineOutlined />}
-                                />
-                                <InlineButton
-                                    format={inline.deleted}
-                                    icon={<Icon.StrikethroughOutlined />}
-                                />
+                                <Row>
+                                    <InlineButton
+                                        format={inline.bold}
+                                        icon={<Icon.BoldOutlined />}
+                                    />
+                                    <InlineButton
+                                        format={inline.italic}
+                                        icon={<Icon.ItalicOutlined />}
+                                    />
+                                    <InlineButton
+                                        format={inline.underline}
+                                        icon={<Icon.UnderlineOutlined />}
+                                    />
+                                    <InlineButton
+                                        format={inline.deleted}
+                                        icon={<Icon.StrikethroughOutlined />}
+                                    />
+                                </Row>
                             </div>
                             <div>
-                                <BlockButton format={block.link} icon={<Icon.LinkOutlined />}></BlockButton>
-                                <BlockButton format={block.blockquote}>Q</BlockButton>
-                                <BlockButton format={block.numberedList} icon={<Icon.OrderedListOutlined />} />
-                                <BlockButton format={block.bulletedList} icon={<Icon.UnorderedListOutlined />} />
+                                <Row>
+                                    <BlockButton format={block.link} icon={<Icon.LinkOutlined />}></BlockButton>
+                                    <BlockButton format={block.blockquote}>Q</BlockButton>
+                                    <BlockButton format={block.numberedList} icon={<Icon.OrderedListOutlined />} />
+                                    <BlockButton format={block.bulletedList} icon={<Icon.UnorderedListOutlined />} />
+                                </Row>
+                                <Row>
+                                    <BlockButton format={block.textAlign} attr={{ alignType: 'left' }} icon={<Icon.AlignLeftOutlined />} />
+                                    <BlockButton format={block.textAlign} attr={{ alignType: 'center' }} icon={<Icon.AlignCenterOutlined />} />
+                                    <BlockButton format={block.textAlign} attr={{ alignType: 'right' }} icon={<Icon.AlignRightOutlined />} />
+                                </Row>
                             </div>
                             <div>
-                                <BlockButton format={block.horizontalLine} icon={<Icon.MinusOutlined />} />
-                                <Dropdown overlay={<QuickInsertMenu editor={editor} />}>
-                                    <Typography.Link className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                                        快速插入<Icon.DownOutlined />
-                                    </Typography.Link>
-                                </Dropdown>,
+                                <Row>
+                                    <BlockButton format={block.horizontalLine} icon={<Icon.MinusOutlined />} />
+                                </Row>
+                            </div>
+                            <div>
+                                <Row>
+                                    <Dropdown overlay={<QuickInsertMenu editor={editor} />}>
+                                        <Typography.Link className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+                                            快速插入<Icon.DownOutlined />
+                                        </Typography.Link>
+                                    </Dropdown>
+                                </Row>
                             </div>
                         </ToolBar>
                     </Header>
@@ -100,6 +117,7 @@ const MyEditor: React.FC = () => {
         </>
     )
 }
+
 const optionalValues = {
     withDefault: [{ "type": "paragraph", "children": [{ "text": "请输入文本" }] }],
     withEmpty: [{ "type": "paragraph", "children": [{ "text": "" }] }],
@@ -147,8 +165,6 @@ const contentList = {
     </pre>,
 };
 
-
-
 const ValueInitializer: React.FC<{ editorValueKey: (v: string) => any }> = (props) => {
     const tabList = [
         {
@@ -188,7 +204,6 @@ const ValueInitializer: React.FC<{ editorValueKey: (v: string) => any }> = (prop
 const QuickInsertMenu = (props: { editor: Editor }) => (
     <Menu onMouseDown={e => e.preventDefault()} onClick={({ domEvent, key }) => {
         domEvent.preventDefault();
-        debugger
         Transforms.insertText(props.editor, key as string);
     }}>
         <Menu.Item key="█">█</Menu.Item>

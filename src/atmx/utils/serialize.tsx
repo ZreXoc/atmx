@@ -52,11 +52,10 @@ class SText {
 
         const nodes = Node.levels(editor, this.path)
 
-        for (let node of nodes) {
+        for (let [node,path] of nodes) {
+            if (!Element.isElement(node)) continue;
 
-            if (!Element.isElement(node[0])) continue;
-
-            switch ((node[0] as CustomElement).type) {
+            switch ((node as CustomElement).type) {
                 case 'header-one':
                     this.headerLevel = 1;
                     break;
@@ -76,7 +75,7 @@ class SText {
                     this.bulletedListLevel++;
                     break;
                 case 'link':
-                    this.link = (node[0] as LinkElement).url
+                    this.link = (node as LinkElement).url
                     break;
                 case 'horizontal-line':
                     this.horizontalLine = true
