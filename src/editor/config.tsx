@@ -2,7 +2,7 @@ import { message } from "antd";
 import isUrl from "is-url";
 import { Editor, Element, Transforms, Range } from "slate";
 import { RenderElementProps } from "slate-react";
-import { ISerializeRule, LinkElement, Serializer, TextCommand as command, CustomLeaf } from "src/atmx";
+import { ISerializeRule, LinkElement, Serializer, TextCommand as command, CustomLeaf, AlignElement } from "src/atmx";
 
 const nodeMap = {
     inline: {
@@ -36,7 +36,7 @@ const nodeMap = {
             hotkey: "ctrl+d",
             achieve: () => command.toggleMark("deleted"),
             render: (leaf: CustomLeaf) => leaf.appendClass("deleted")
-        }
+        },
     },
     block: {
         //header
@@ -60,6 +60,28 @@ const nodeMap = {
             title: "三级标题",
             achieve: () => command.toggleBlock("header-three"),
             render: (props: RenderElementProps) => <h3 {...props.attributes}>{props.children}</h3>
+        },
+
+        //text-align
+        textAlign: {
+            key: "text-align",
+            title: "对齐",
+            isActive: (editor: Editor, attr: any) => {
+                const alignType = attr.alignType;
+                if (!(alignType && ["left", "center", "right"].includes(alignType))) return false
+                const [match] = Editor.nodes(editor, {
+                    match: n =>
+                        !Editor.isEditor(n) && Element.isElement(n) && n.type === 'text-align',
+                })
+                debugger;
+                return match && (match[0] as AlignElement).alignType === alignType
+            },
+            achieve: (editor: Editor, attr: any) => {
+                const alignType = (attr.alignType && ["left", "center", "right"].includes(attr.alignType)) ? attr.alignType : 'left';
+                command.toggleBlock({ type: 'text-align', alignType, children: [] })
+            },
+            render: (props: RenderElementProps, ele: Element) =>
+                <div style={{ textAlign: (ele as AlignElement).alignType }}{...props.attributes}>{props.children}</div>
         },
         link: {
             key: "link",
