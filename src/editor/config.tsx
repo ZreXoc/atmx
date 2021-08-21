@@ -1,8 +1,8 @@
 import { message } from "antd";
 import isUrl from "is-url";
-import { Editor, Element, Transforms, Range } from "slate";
+import { Editor, Node, Text, Element, Transforms } from "slate";
 import { RenderElementProps } from "slate-react";
-import { ISerializeRule, LinkElement, Serializer, TextCommand as command, CustomLeaf, AlignElement } from "src/atmx";
+import { TextCommand as command, LeafRender, AlignElement, Serialize } from "src/atmx";
 
 const nodeMap = {
     inline: {
@@ -11,7 +11,7 @@ const nodeMap = {
             title: "粗体(B)",
             hotkey: "ctrl+b",
             achieve: () => command.toggleMark("bold"),
-            render: (leaf: CustomLeaf) => leaf.appendClass("bold")
+            render: (leaf: LeafRender) => leaf.appendClass("bold")
         },
 
         italic: {
@@ -19,7 +19,7 @@ const nodeMap = {
             title: "斜体(I)",
             hotkey: "ctrl+i",
             achieve: () => command.toggleMark("italic"),
-            render: (leaf: CustomLeaf) => leaf.appendClass("italic")
+            render: (leaf: LeafRender) => leaf.appendClass("italic")
         },
 
         underline: {
@@ -27,7 +27,7 @@ const nodeMap = {
             title: "下划线(I)",
             hotkey: "ctrl+u",
             achieve: () => command.toggleMark("underline"),
-            render: (leaf: CustomLeaf) => leaf.appendClass("underline")
+            render: (leaf: LeafRender) => leaf.appendClass("underline")
         },
 
         deleted: {
@@ -35,7 +35,28 @@ const nodeMap = {
             title: "删除线(D)",
             hotkey: "ctrl+d",
             achieve: () => command.toggleMark("deleted"),
-            render: (leaf: CustomLeaf) => leaf.appendClass("deleted")
+            render: (leaf: LeafRender) => leaf.appendClass("deleted")
+        },
+
+        link: {
+            key: "link",
+            title: "链接",
+            achieve: () => {
+                if (command.isMarkActive('link')) return command.removeMark("link");
+                let url = window.prompt("Enter the URL of the link:");
+                if (!url) message.error("url不可为空");
+                else if (!isUrl(url) && isUrl("http://" + url)) url = "http://" + url;
+                else message.error("不合法的url:" + url);
+                command.toggleMark("link", { url })
+            },
+            render: (leafRender: LeafRender) => {
+                let url = leafRender.getLeaf().link?.url;
+                if (url) leafRender.setChildren((
+                    <a href={url}>
+                        {leafRender.getChildren()}
+                    </a>
+                ));
+            }
         },
     },
     block: {
@@ -73,7 +94,6 @@ const nodeMap = {
                     match: n =>
                         !Editor.isEditor(n) && Element.isElement(n) && n.type === 'text-align',
                 })
-                debugger;
                 return match && (match[0] as AlignElement).alignType === alignType
             },
             achieve: (editor: Editor, attr: any) => {
@@ -83,61 +103,61 @@ const nodeMap = {
             render: (props: RenderElementProps, ele: Element) =>
                 <div style={{ textAlign: (ele as AlignElement).alignType }}{...props.attributes}>{props.children}</div>
         },
-        link: {
-            key: "link",
-            title: "链接",
-            achieve: (editor: Editor) => {
-                const { isBlockActive } = command;
-
-                const insertLink = (url: string) => {
-                    if (editor.selection) {
-                        wrapLink(url)
+        /*         link: {
+                    key: "link",
+                    title: "链接",
+                    achieve: (editor: Editor) => {
+                        const { isBlockActive } = command;
+        
+                        const insertLink = (url: string) => {
+                            if (editor.selection) {
+                                wrapLink(url)
+                            }
+                        }
+        
+                        const wrapLink = (url: string) => {
+                            if (isBlockActive("link")) {
+                                unwrapLink()
+                            }
+        
+                            const { selection } = editor
+                            const isCollapsed = selection && Range.isCollapsed(selection)
+                            const link: LinkElement = {
+                                type: "link",
+                                url,
+                                children: isCollapsed ? [{ text: url }] : [],
+                            }
+        
+                            if (isCollapsed) {
+                                Transforms.insertNodes(editor, link)
+                            } else {
+                                Transforms.wrapNodes(editor, link, { split: true })
+                                Transforms.collapse(editor, { edge: "end" })
+                            }
+                        }
+        
+                        const unwrapLink = () => {
+                            Transforms.unwrapNodes(editor, {
+                                match: n =>
+                                    !Editor.isEditor(n) && Element.isElement(n) && n.type === "link",
+                            })
+                        }
+        
+                        if (isBlockActive("link")) {
+                            unwrapLink()
+                        } else {
+                            let url = window.prompt("Enter the URL of the link:");
+                            if (!url) message.error("url不可为空");
+                            else if (isUrl(url) || isUrl("http://" + url)) insertLink("http://" + url);
+                            else message.error("不合法的url:" + url);
+                        }
+                    },
+        
+                    render(props: RenderElementProps) {
+                        const element = props.element as LinkElement;
+                        return (<a href={element.url} {...props.attributes}>{props.children}</a>)
                     }
-                }
-
-                const wrapLink = (url: string) => {
-                    if (isBlockActive("link")) {
-                        unwrapLink()
-                    }
-
-                    const { selection } = editor
-                    const isCollapsed = selection && Range.isCollapsed(selection)
-                    const link: LinkElement = {
-                        type: "link",
-                        url,
-                        children: isCollapsed ? [{ text: url }] : [],
-                    }
-
-                    if (isCollapsed) {
-                        Transforms.insertNodes(editor, link)
-                    } else {
-                        Transforms.wrapNodes(editor, link, { split: true })
-                        Transforms.collapse(editor, { edge: "end" })
-                    }
-                }
-
-                const unwrapLink = () => {
-                    Transforms.unwrapNodes(editor, {
-                        match: n =>
-                            !Editor.isEditor(n) && Element.isElement(n) && n.type === "link",
-                    })
-                }
-
-                if (isBlockActive("link")) {
-                    unwrapLink()
-                } else {
-                    let url = window.prompt("Enter the URL of the link:");
-                    if (!url) message.error("url不可为空");
-                    else if (isUrl(url) || isUrl(url += "http://")) insertLink(url);
-                    else message.error("不合法的url:" + url);
-                }
-            },
-
-            render(props: RenderElementProps) {
-                const element = props.element as LinkElement;
-                return (<a href={element.url} {...props.attributes}>{props.children}</a>)
-            }
-        },
+                }, */
         blockquote: {
             key: "block-quote",
             title: "引用",
@@ -149,24 +169,10 @@ const nodeMap = {
             title: "有序列表",
             achieve: (editor: Editor) => {
                 const isActive = command.isBlockActive("numbered-list");
+                command.toggleBlock('numbered-list', { nested: true, split: true })
                 if (!isActive) {
-                    Transforms.wrapNodes(
-                        editor,
-                        {
-                            type: "numbered-list",
-                            children: []
-                        }
-                    );
                     Transforms.setNodes(editor, { type: 'list-item' })
                 } else {
-
-                    Transforms.unwrapNodes(editor,
-                        {
-                            match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === "numbered-list",
-                            //split: isList ? false : true
-                            split: true
-                        }
-                    );
                     Transforms.setNodes(editor, { type: 'paragraph' },
                         { match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'list-item' });
 
@@ -179,23 +185,10 @@ const nodeMap = {
             title: "无序列表",
             achieve: (editor: Editor) => {
                 const isActive = command.isBlockActive("bulleted-list");
+                command.toggleBlock('bulleted-list', { nested: true, split: true })
                 if (!isActive) {
-                    Transforms.wrapNodes(
-                        editor,
-                        {
-                            type: "bulleted-list",
-                            children: []
-                        }
-                    );
                     Transforms.setNodes(editor, { type: 'list-item' })
                 } else {
-                    Transforms.unwrapNodes(editor,
-                        {
-                            match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === "bulleted-list",
-                            //split: isList ? false : true
-                            split: true
-                        }
-                    );
                     Transforms.setNodes(editor, { type: 'paragraph' },
                         { match: n => !Editor.isEditor(n) && Element.isElement(n) && n.type === 'list-item' });
 
@@ -217,90 +210,222 @@ const nodeMap = {
     }
 }
 
-const serializeRules: ISerializeRule[] = [
-    //inline
-    (serializer: Serializer) =>
-        Array.of<[mark: string, before: string, after?: string]>(
-            ['bold', '**'],
-            ['italic', '//'],
-            ['underline', '__'],
-            ['deleted', '--']
-        ).forEach(m => serializer.wrapByMark(...m)),
-
-    //line break
-    (serializer: Serializer) => {
-        let ranges = serializer.find({
-            match: (sText, i, sTexts) => [!sTexts[i - 1], !sTexts[i + 1]],//匹配段首,段末
-            split: 'paragraph',
-            emptyString: true
-        })
-        for (const range of ranges) {
-            serializer.wrap(['', '<br/>'], { range, priority: 0 })
+export interface SContext extends Serialize.Context {
+    headerLevel: number,
+    quote: number,
+}
+const serialize: Serialize.Config<SContext> = {
+    markRules: [
+        //header
+        {
+            match: ({ nodeEntry: [node] }) => Element.isElement(node) && !!node.type.match(/header-*/),
+            mark: ({ nodeEntry: [node], context }) => {
+                let level = 0;
+                switch ((node as Element).type) {
+                    case 'header-one':
+                        level = 1;
+                        break;
+                    case 'header-two':
+                        level = 2;
+                        break;
+                    case 'header-three':
+                        level = 3;
+                        break;
+                }
+                context.headerLevel = level;
+                return context
+            }
+        },
+        //quote
+        {
+            match: ({ nodeEntry: [node] }) => Element.isElement(node) && node.type === 'block-quote',
+            mark: ({ context }) => {
+                if (!context.quote) context.quote = 0;
+                context.quote++;
+                return context;
+            }
         }
+    ],
+    serializeHandlers: {
+        leafHandler: [
+            //inline
+            {
+                match: () => true,
+                handle: ({ nodeEntry: [node], texts, leafs }) => {
+                    //merge same mark in constant leafs
+                    const findByMark = (mark: string, leafs: Text[], matchValue: boolean = false) => {
+                        let ranges = Array<[start: number, end: number]>();
+                        let start = 0, end = 0;
+
+                        for (let i = 0; i < leafs.length; i++) {
+                            const leaf = leafs[i];
+                            if (!Text.isText(leaf)) throw new Error(`unexpected error, node.children[${i}] is not a Text`);
+                            //find constant marks
+                            if (!leaf[mark]) {
+                                start = i + 1;
+                                end = start;
+                            };
+                            if (leaf[mark]) {
+                                let next = leafs[i + 1];
+                                if (!(next && next[mark] && !(matchValue && leaf[mark] !== next[mark]))) {
+                                    ranges.push([start, end]);
+                                    start = i + 1;
+                                    end = start;
+                                    continue;
+                                }
+                                end = i + 1;
+                            };
+                        }
+                        return ranges;
+                    }
+                    const map: Array<[mark: string, str: [before: string | null, after: string | null]]> = [
+                        ['bold', ['**', '**']],
+                        ['italic', ['//', '//']]
+                    ]
+                    map.forEach(([mark, str]) => {
+                        findByMark(mark, leafs).forEach(range => {
+                            Serialize.TextArray.wrap(texts, str, { range, priority: 3 })
+                        })
+                    })
+
+                    //color
+                    findByMark('color', leafs, true).forEach(range => {
+                        const leaf = leafs[range[0]];
+                        if (!Text.isText(leaf)) throw new Error(`unexpected error, leafs[${range[0]}] is not a Text`);
+                        Serialize.TextArray.wrap(texts, [`#${leaf.color}|`, `##`], { range: range, priority: 3 })
+                    })
+
+                    //link
+                    findByMark('link', leafs, true).forEach(range => {
+                        const leaf = leafs[range[0]];
+                        if (!Text.isText(leaf)) throw new Error(`unexpected error, leafs[${range[0]}] is not a Text`);
+                        const { link } = leaf
+                        if (!link) throw new Error('unexpected error, leaf.link is not exist');
+                        Serialize.TextArray.wrap(texts, [`[${link.url} `, `]`], { range: range, type: 'inner', priority: 4 })
+                    })
+
+                    /*                     for (let i = 0; i < node.children.length; i++) {
+                                            const leaf = node.children[i]
+                                            if (!Text.isText(leaf)) throw new Error("unexpected error");
+                                            //hex color already has a '#'
+                                            if (leaf.color)
+                                                Serialize.TextArray.wrap(texts, [`#${leaf.color}|`, `##`], { range: [i, i], priority: 3 })
+                                        } */
+                    return texts;
+                }
+            },
+        ],
+        elementHandler: [
+            //line-break
+            {
+                match: ({ nodeEntry: [node], root }) => {
+                    if (!Element.isElement(node)) return false;
+                    let hasTextChild = node.children.some(n => Text.isText(n));
+                    if (!hasTextChild) return false;
+                    return Editor.isEditor(root) ? !root.isInline(node) : Element.isElement(node)
+                },
+                handle: ({ texts }) => {
+                    texts[texts.length - 1].wrap([undefined, '\n'], 'outer', 0);
+                    return texts;
+                }
+            },
+
+            //header
+            {
+                match: ({ nodeEntry: [node] }) => Element.isElement(node) && !!node.type.match(/header-*/),
+                handle: ({ nodeEntry: [node], texts }) => {
+                    let level = 0;
+                    switch ((node as Element).type) {
+                        case 'header-one':
+                            level = 1;
+                            break;
+                        case 'header-two':
+                            level = 2;
+                            break;
+                        case 'header-three':
+                            level = 3;
+                            break;
+                    }
+                    let str = Array(level).fill('+').join('') + ' ';
+                    Serialize.TextArray.wrap(texts, [str, null], { priority: 1 })
+                    return texts;
+                }
+            },
+            //list-item
+            {
+                match: ({ nodeEntry: [node] }) => Element.isElement(node) && node.type === 'list-item',
+                handle: ({ texts, childRanges, root, nodeEntry: [node, path] }) => {
+                    let parent = Node.parent(root, path);
+                    let str = Editor.isEditor(parent) || parent.type !== 'block-quote' ? '> ' : '>';
+                    switch ((parent as Element).type) {
+                        case 'numbered-list':
+                            str = '# '
+                            break;
+                        case 'bulleted-list':
+                            str = '* '
+                            break;
+                    }
+                    childRanges.forEach(range => {
+                        Serialize.TextArray.wrap(texts, [str, null], { range, priority: 1 })
+                    })
+
+                    return texts;
+                }
+            },
+            //list container
+            {
+                match: ({ nodeEntry: [node] }) => Element.isElement(node) && !!node.type.match(/(.*)-list/),
+                handle: ({ texts, childRanges, root, nodeEntry: [node, path] }) => {
+                    let parent = Node.parent(root, path);
+                    let str = Editor.isEditor(parent) || !parent.type.match(/(.*)-list/) ? '' : ' ';
+                    childRanges.forEach(range => {
+                        Serialize.TextArray.wrap(texts, [str, null], { range, priority: 1 })
+                    })
+
+                    return texts;
+                }
+            },
+            //quote
+            {
+                match: ({ nodeEntry: [node] }) => Element.isElement(node) && node.type === 'block-quote',
+                handle: ({ texts, childRanges, root, nodeEntry: [node, path] }) => {
+                    let parent = Node.parent(root, path);
+                    let str = Editor.isEditor(parent) || parent.type !== 'block-quote' ? '> ' : '>';
+                    childRanges.forEach(range => {
+                        Serialize.TextArray.wrap(texts, [str, null], { type: 'inner', range, priority: 0 })
+                    })
+
+                    return texts;
+                }
+            },
+            //text align
+            {
+                match: ({ nodeEntry: [node] }) => Element.isElement(node) && node.type === 'text-align',
+                handle: ({ texts, nodeEntry: [node, path] }) => {
+                    let str: [string, string];
+                    switch ((node as AlignElement).alignType) {
+                        case 'left':
+                            str = ['[[<]]\n', '\n[[/<]]'];
+                            break;
+                        case 'center':
+                            str = ['[[=]]\n', '\n[[/=]]'];
+                            break;
+                        case 'right':
+                            str = ['[[>]]\n', '\n[[/>]]'];
+                            break;
+                    }
+                    Serialize.TextArray.wrap(texts, str, { priority: 1 })
+                    return texts;
+                }
+            }
+        ]
     },
-
-    //header,quote
-    (serializer: Serializer) => {
-        let ranges = serializer.find({
-            match: (sText, i, sTexts) => [!sTexts[i - 1] && (sText.headerLevel || sText.quoteLevel), !sTexts[i + 1]],//匹配段首/末
-            split: 'paragraph'
-        })
-        for (const range of ranges) {
-            let { headerLevel, quoteLevel } = serializer.sTexts[range[0]];
-            let str = quoteLevel ? new Array(quoteLevel).fill('>').join('') + ' ' : ''
-            str += headerLevel ? new Array(headerLevel).fill('+').join('') + ' ' : ''
-            serializer.wrap([str, ''], { range, priority: 0 })
-        }
-    },
-
-    //list
-    (serializer: Serializer) => {
-        let ranges = serializer.find({
-            match: (sText, i, sTexts) => [!sTexts[i - 1] && (sText.numberedListLevel || sText.bulletedListLevel), !sTexts[i + 1]],//匹配段首/末
-            split: 'paragraph'
-        })
-        for (const range of ranges) {
-            let { numberedListLevel, bulletedListLevel } = serializer.sTexts[range[0]];
-            let str = numberedListLevel ? new Array(numberedListLevel).fill(' ').join('') + '# ' : ''
-            str += bulletedListLevel ? new Array(bulletedListLevel).fill('+').join('') + '* ' : ''
-            serializer.wrap([str, ''], { range, priority: 1 });
-        }
-
-    },
-
-    //link,color
-    (serializer: Serializer) => {
-        let ranges = serializer.find({
-            match: (sText, i, sTexts) => (sText.link || sText.text.color) ? [true, true] : [false, false],
-            split: 'paragraph'
-        })
-        for (const range of ranges) {
-            const link = serializer.sTexts[range[0]].link;
-            const color = serializer.sTexts[range[0]].text.color;
-            if (link) serializer.wrap([`[[[${link} | `, ']]]'], { range, priority: 4 })
-            if (color) serializer.wrap([`#${color}|`, '##'], { range, priority: 3 })//16进制color自带一个#
-        }
-    },
-
-    //
-    (serializer: Serializer) => {
-        let ranges = serializer.find({
-            match: (sText, i, sTexts) => [sTexts[i].horizontalLine, sTexts[i].horizontalLine],
-            split: 'paragraph',
-            emptyString: true
-        })
-        for (const range of ranges) {
-            serializer.wrap(['----', ''], { range })
-        }
-    },
-
-    //number list,bulleted list
-    //TODO
-]
+    length: 5
+}
 
 const editorConfig = {
     nodeMap,
-    serializeRules
+    serialize
 }
 
 export default editorConfig;

@@ -1,12 +1,12 @@
 import isUrl from "is-url";
-import { createEditor, Descendant, Editor, Element, Node, Transforms } from "slate";
+import { Ancestor, createEditor, Descendant, Editor, Element, Node, Transforms } from "slate";
 import { withHistory } from "slate-history";
 import { DefaultElement, ReactEditor, RenderElementProps, RenderLeafProps, withReact } from "slate-react";
-import { CustomLeaf, EditorConfig, EditorInfo, serializeWithEditor, TextCommand } from "..";
+import { LeafRender, EditorConfig, EditorInfo, Serialize, TextCommand } from "..";
 
-export class EditorInitializer {
+export class EditorInitializer<T extends Serialize.Context> {
     private editor: Editor;
-    private config!: EditorConfig;
+    private config!: EditorConfig<T>;
     private originValue!: Descendant[];
 
     withHistory() {
@@ -19,7 +19,7 @@ export class EditorInitializer {
         return this;
     }
 
-    setConfig(config: EditorConfig) {
+    setConfig(config: EditorConfig<T>) {
         this.config = config;
         return this;
     };
@@ -30,22 +30,22 @@ export class EditorInitializer {
     }
 
     build() {
-        const { editor, originValue, config: { nodeMap, serializeRules } } = this;
+        const { editor, originValue, config: { nodeMap, serialize: _serialize } } = this;
 
         if (!originValue) throw Error("\"value\" undefined. use \"setValue()\" to initialize before build")
 
         const renderLeaf = (props: RenderLeafProps) => {
-            let leaf = new CustomLeaf(props);
+            let leafRender = new LeafRender(props);
 
             Object.values(nodeMap.inline).forEach(inlineNode => {
-                if(!inlineNode.key) return;
+                if (!inlineNode.key) return;
                 if (props.leaf.hasOwnProperty(inlineNode.key)) {
-                    inlineNode.render(leaf);
+                    inlineNode.render(leafRender);
                 }
             })
 
-            if (props.leaf.color) leaf.appendStyle({ color: props.leaf.color })
-            return leaf.render();
+            if (props.leaf.color) leafRender.appendStyle({ color: props.leaf.color })
+            return leafRender.render();
         }
 
         const renderElement = (props: RenderElementProps) => {
@@ -62,10 +62,13 @@ export class EditorInitializer {
             return element || <DefaultElement {...props} />
         }
 
-        const serialize = () => serializeWithEditor(editor, serializeRules);
+        const serialize = (node: Ancestor) => {
+            let { markRules, serializeHandlers, length } = _serialize;
+            return new Serialize.Serializer<T>(node, markRules, serializeHandlers, length)
+        };
 
         const editorInfo = () => { return { editor, originValue, initialValue: editor.children, renderLeaf, renderElement, nodeMap, serialize } };
-        return (editorInfo as EditorInfo)
+        return (editorInfo as EditorInfo<T>)
     }
 
     constructor() {
@@ -117,6 +120,14 @@ const withAtmx = (editor: Editor) => {
                 }
             }
         }
+        if (Element.isElement(node) && node.type === 'block-quote') {
+            for (const [child, childPath] of Node.children(editor, path)) {
+                if (Element.isElement(child) && editor.isInline(child)) {
+                    Transforms.wrapNodes(editor, { type: 'paragraph', children: [] }, { at: childPath });
+                    return;
+                }
+            }
+        }
 
         //parent of 'list-item' must be a list, or its type will be changed into 'paragraph'
         //descendant of 'list-item' must be inline
@@ -128,23 +139,25 @@ const withAtmx = (editor: Editor) => {
             }
         }
 
-        //list.children:{type:'list-item'}[], list.firstChildren:{type:LIST_TYPES}
+        //list.child:{ type: 'list-item' || node.type }, list.firstChildren:{ type: 'list-item' }
         if (Element.isElement(node) && LIST_TYPES.includes(node.type)) {
             let isFirstChild = true;
             for (const [child, childPath] of Node.children(editor, path)) {
-                if (Element.isElement(child) && isFirstChild && LIST_TYPES.includes(child.type))
+                if (!Element.isElement(child)) {
+                    isFirstChild = false;
+                    continue;
+                }
+                if (isFirstChild && LIST_TYPES.includes(child.type))
                     Transforms.unwrapNodes(editor, { at: childPath, split: true });
 
-                if (Element.isElement(child) && !(child.type === 'list-item' || LIST_TYPES.includes(child.type)))
+                if (child.type !== 'list-item' && !LIST_TYPES.includes(child.type))
                     Transforms.setNodes(editor, { type: 'list-item' }, { at: childPath });
+
+                if (LIST_TYPES.includes(child.type) && child.type !== node.type)
+                    Transforms.setNodes(editor, { type: node.type }, { at: childPath });
+
                 isFirstChild = false;
             }
-
-            /*const parent = Node.parent(editor,path);
-            const parentPath = path.slice(0,path.length-1)
-            for (const [child, childPath] of Node.children(editor, parentPath)) {
-                if
-            }*/
 
             return
         }

@@ -1,6 +1,6 @@
 {
     "name": "antimemetix",
-    "version": "0.7.8",
+    "version": "0.8.0",
     "main": "index.tsx",
     "private": true,
     "dependencies": {

@@ -1,9 +1,9 @@
 import * as Icon from "@ant-design/icons";
 import { Button as AntdButton, Card, Dropdown, Layout, Menu, Modal, Row, Typography } from "antd";
 import { useState } from "react";
-import { Transforms, Editor } from "slate";
-import { BlockButton, EditArea, EditorInitializer, InlineButton, MainEditor, PropertiesPanel, StartMenu, ToolBar, useDefaultValue, useEditorInfo } from '../atmx';
-import editorConfig from "./config";
+import { Transforms, Editor, Element } from "slate";
+import { BlockButton, EditArea, EditorInitializer, InlineButton, MainEditor, PropertiesPanel, Serialize, StartMenu, ToolBar, useDefaultValue, useEditorInfo } from '../atmx';
+import editorConfig, { SContext } from "./config";
 
 const { Header, Content, Sider } = Layout;
 
@@ -27,7 +27,8 @@ const MyEditor: React.FC = () => {
             )
         })
     }
-    const editorInfo = (new EditorInitializer())
+
+    const editorInfo = (new EditorInitializer<SContext>())
         .withHistory()
         .withAtmx()
         .setConfig(editorConfig)
@@ -35,7 +36,7 @@ const MyEditor: React.FC = () => {
         .build();
     useEditorInfo(editorInfo);
 
-    const { editor } = useEditorInfo();
+    const { editor, originValue, serialize } = useEditorInfo();
     const { inline, block } = editorConfig.nodeMap;
 
     return (
@@ -75,7 +76,8 @@ const MyEditor: React.FC = () => {
                             </div>
                             <div>
                                 <Row>
-                                    <BlockButton format={block.link} icon={<Icon.LinkOutlined />}></BlockButton>
+                                    <InlineButton format={inline.link} icon={<Icon.LinkOutlined />} />
+                                    {/* <BlockButton format={block.link} icon={<Icon.LinkOutlined />}></BlockButton> */}
                                     <BlockButton format={block.blockquote}>Q</BlockButton>
                                     <BlockButton format={block.numberedList} icon={<Icon.OrderedListOutlined />} />
                                     <BlockButton format={block.bulletedList} icon={<Icon.UnorderedListOutlined />} />

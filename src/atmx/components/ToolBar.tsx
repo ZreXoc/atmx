@@ -1,12 +1,9 @@
 import { InboxOutlined } from "@ant-design/icons";
-import { Button as AntdButton, ButtonProps, Divider, Dropdown, Menu, Modal, Space, Upload, message } from "antd";
-import { DraggerProps, UploadChangeParam } from "antd/lib/upload";
-import { UploadFile } from "antd/lib/upload/interface";
+import { Button as AntdButton, ButtonProps, Divider, Dropdown, Menu, message, Modal, Space, Upload } from "antd";
+import { DraggerProps } from "antd/lib/upload";
 import ClipboardJS from "clipboard";
 import { saveAs } from 'file-saver';
-import { useCallback } from "react";
-import ReactDOM from "react-dom";
-import { Descendant, Editor, Transforms } from "slate";
+import { Editor } from "slate";
 import { useSlate } from "slate-react";
 import { AchievedNode, BlockNode, InlineNode, TextCommand as command, useEditorInfo } from "..";
 const { Dragger } = Upload;
@@ -41,7 +38,7 @@ export const DefaultButton: React.FC<{ isActive?: boolean } & ButtonProps> = (pr
 
 export const InlineButton: React.FC<{ format: InlineNode & AchievedNode, attr?: Object, isActive?: (editor: Editor) => boolean, icon?: React.ReactNode } & ButtonProps> = (props) => {
     const editor = useSlate();
-    const { format, attr = {}, icon, ...buttonProps } = props
+    const { format, attr, icon, ...buttonProps } = props
 
     return (
         <AntdButton size='small' type="text" icon={icon} title={format.title}
@@ -50,12 +47,12 @@ export const InlineButton: React.FC<{ format: InlineNode & AchievedNode, attr?: 
             }}
             onClick={e => {
                 e.preventDefault()
-                format.achieve(editor, attr || {});
-            }}
-            {...buttonProps}
+                format.achieve(editor, attr);
+}}
+{...buttonProps }
         >
-            {props.children}
-        </AntdButton>
+    { props.children }
+        </AntdButton >
     )
 }
 export const BlockButton: React.FC<{ format: BlockNode & AchievedNode, attr?: Object, icon?: React.ReactNode } & ButtonProps> = (props) => {
@@ -142,7 +139,7 @@ export const StartMenu = () => {
                                     title: '导出为wikidot',
                                     content:
                                         <>
-                                            <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize().toString() }} />
+                                            <pre id='export-output' dangerouslySetInnerHTML={{ __html: serialize(editor).serializeAll() }} />
                                             <AntdButton id='export-copy' data-clipboard-action="copy" data-clipboard-target="#export-output">copy</AntdButton>
                                         </>,
                                 });

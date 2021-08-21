@@ -1,8 +1,8 @@
-import { EditorInfo } from "..";
+import { EditorInfo, Serialize } from "..";
 
-let config: EditorInfo;
+let config: EditorInfo<any>;
 
-export const useEditorInfo = (editorInfo?: EditorInfo) => {
-    if (editorInfo) config = editorInfo;
+export const useEditorInfo = <T extends Serialize.Context>(editorInfo?: EditorInfo<T>) => {
+    if (editorInfo) (config as EditorInfo<T>) = editorInfo;
     return config();
 }

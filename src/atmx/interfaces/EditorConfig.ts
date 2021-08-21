@@ -1,10 +1,10 @@
 import { Editor, Element } from "slate";
 import { RenderElementProps } from "slate-react";
-import { CustomLeaf, Serializer } from "..";
+import { LeafRender, Serialize, Serializer } from "..";
 
-export interface EditorConfig {
+export interface EditorConfig<T extends Serialize.Context> {
     nodeMap: INodeMap;
-    serializeRules: ISerializeRule[];
+    serialize: Serialize.Config<T>
 }
 
 export interface INodeMap {
@@ -21,9 +21,9 @@ export interface InlineNode {
     title?: string;
     //description?:string;
     hotkey?: string;
-    isActive?: (editor: Editor,attr: object) => boolean,
-    achieve?: (editor: Editor, attr: object) => any;
-    render: (customLeaf: CustomLeaf) => CustomLeaf;
+    isActive?: (editor: Editor, attr: any) => boolean,
+    achieve?: (editor: Editor, attr: any) => any;
+    render: (leafRender: LeafRender) => any;
 }
 
 export interface BlockNode {
@@ -40,6 +40,3 @@ export interface BlockNode {
 export interface AchievedNode {
     achieve: (editor: Editor, attr: object) => any;
 }
-
-
-export type ISerializeRule = (serializer: Serializer) => any;

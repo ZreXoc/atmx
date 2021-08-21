@@ -10,6 +10,7 @@ export * from './interfaces/type';
 export * from './utils/EditorInitializer';
 export * from './utils/render';
 export * from './utils/serialize';
+export *  as Serialize from './utils/serialize';
 export * as TextCommand from './utils/TextCommand';
 
 

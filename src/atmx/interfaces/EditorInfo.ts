@@ -1,8 +1,8 @@
-import { Editor, Descendant } from "slate";
+import { Editor, Descendant, Ancestor } from "slate";
 import { RenderLeafProps, RenderElementProps } from "slate-react";
-import { INodeMap, Serializer } from "..";
+import { INodeMap, Serialize } from "..";
 
-export type EditorInfo = () => {
+export type EditorInfo<T extends Serialize.Context = Serialize.Context> = () => {
     editor: Editor;
 
     originValue: Descendant[];
@@ -15,5 +15,5 @@ export type EditorInfo = () => {
 
     nodeMap: INodeMap;
 
-    serialize: () => Serializer;
+    serialize: (node:Ancestor) => Serialize.Serializer<T>;
 }

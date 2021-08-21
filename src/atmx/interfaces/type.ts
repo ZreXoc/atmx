@@ -14,7 +14,7 @@ export type AlignElement = {
     alignType: 'left' | 'center' | 'right'
 
 }
-
+//TODO turn Link from Element to inline
 export type LinkElement = {
     type: 'link'
     url: string
@@ -42,6 +42,7 @@ export type FormattedText = {
     bold?: true
     italic?: true
     color?: string
+    link?: { url: string }
 }
 
 export type CustomText = FormattedText
